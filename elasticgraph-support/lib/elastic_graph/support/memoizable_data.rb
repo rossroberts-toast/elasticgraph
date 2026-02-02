@@ -117,7 +117,7 @@ module ElasticGraph
           # hide the wrapping we're doing here, so here we want `new` to accept the direct arguments that `new` on the `Data` class
           # would accept. Here we instantiate the data class and the wrap it.
           def new(*args, **kwargs)
-            # JRuby 10.0 has a bug where single-attribute Data classes don't accept positional arguments correctly.
+            # JRuby 10.0 has a bug where single-attribute Data classes don't accept positional arguments correctly
             # When we have positional args and no keyword args, convert them to keyword args.
             if args.any? && kwargs.empty?
               members = self::DATA_CLASS.members
