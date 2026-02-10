@@ -271,6 +271,8 @@ module ElasticGraph
           require: client_faraday_adapter.fetch("require")
         )
 
+        # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
+        # When values is empty, JRuby incorrectly passes it as an extra argument.
         values.merge({
           client_faraday_adapter: client_faraday_adapter,
           clusters: clusters,

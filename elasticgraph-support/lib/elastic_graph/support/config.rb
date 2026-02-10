@@ -144,7 +144,11 @@ module ElasticGraph
         # @private
         def new_without_validation(**data)
           instance = allocate
-          instance.send(:__data_initialize, **data)
+          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
+          # Ensure hash keys are in the same order as the Data fields to avoid JRuby kwargs bug.
+          # We build a new hash with keys in the correct order.
+          ordered_data = members.to_h { |key| [key, data[key]] }
+          instance.send(:__data_initialize, **ordered_data)
           instance
         end
       end
@@ -162,7 +166,15 @@ module ElasticGraph
           end
 
           config = config.transform_keys(&:to_sym)
-          __skip__ = super(**convert_values(**config))
+          converted = convert_values(**config)
+
+          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
+          # When converted is empty, JRuby incorrectly passes it as an extra argument.
+          __skip__ = if converted.empty?
+            super()
+          else
+            super(**converted)
+          end
         end
 
         # Overrides `#with` to bypass the normal JSON schema validation that applies in `#initialize`.

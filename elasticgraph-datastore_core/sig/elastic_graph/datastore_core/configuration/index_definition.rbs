@@ -29,7 +29,10 @@ module ElasticGraph
       end
 
       class IndexDefinition < IndexDefinitionSupertype
-        def initialize: (ignore_routing_values: ::Array[::String], **untyped) -> void
+        def initialize: (
+          ignore_routing_values: ::Array[::String],
+          **untyped
+        ) -> void
         def without_env_overrides: () -> IndexDefinition
         def custom_timestamp_range_for: (::Time) -> CustomTimestampRange?
         def self.definitions_by_name_hash_from: (::Hash[::String, ::Hash[::String, untyped]]) -> ::Hash[::String, IndexDefinition]
