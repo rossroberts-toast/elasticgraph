@@ -119,9 +119,9 @@ SimpleCov.start do
   track_files "{#{gems_being_tested_globs.join(",")}}"
 
   # Disable branch coverage on JRuby due to compatibility issues: https://github.com/jruby/jruby/issues/5147
-  enable_coverage :branch unless RUBY_PLATFORM == 'java'
+  enable_coverage :branch unless RUBY_PLATFORM == "java"
   minimum_coverage line: 100
-  minimum_coverage branch: 100 unless RUBY_PLATFORM == 'java'
+  minimum_coverage branch: 100 unless RUBY_PLATFORM == "java"
 
   merge_timeout 1800 # 30 minutes. CI jobs can take 15-20 minutes.
 end
