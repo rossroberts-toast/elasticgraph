@@ -35,7 +35,11 @@ if RUBY_ENGINE == "jruby"
 
           if args.empty? && !kwargs.empty?
             # Only kwargs - reorder to match member order
-            ordered_kwargs = klass.members.to_h { |member| [member, kwargs.fetch(member)] }
+            # Only include keys that were actually provided (to preserve defaults)
+            ordered_kwargs = {}
+            klass.members.each do |member|
+              ordered_kwargs[member] = kwargs[member] if kwargs.key?(member)
+            end
             original_initialize.bind(self).call(**ordered_kwargs)
           elsif !args.empty? && kwargs.empty?
             # Only positional args
@@ -44,11 +48,14 @@ if RUBY_ENGINE == "jruby"
             # Both - merge and reorder
             positional_as_kwargs = klass.members[0...args.size].zip(args).to_h
             merged = positional_as_kwargs.merge(kwargs)
-            ordered_kwargs = klass.members.to_h { |member| [member, merged.fetch(member)] }
+            ordered_kwargs = {}
+            klass.members.each do |member|
+              ordered_kwargs[member] = merged[member] if merged.key?(member)
+            end
             original_initialize.bind(self).call(**ordered_kwargs)
           else
             # Both empty
-            original_initialize.bind(self).call()
+            original_initialize.bind(self).call
           end
         end
 
