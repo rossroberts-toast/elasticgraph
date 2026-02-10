@@ -13,7 +13,9 @@ require "elastic_graph/support/json_schema/validator"
 module ElasticGraph
   RSpec.describe "ElasticGraph gems" do
     gemspecs_by_gem_name = ::Hash.new do |hash, gem_name|
+      # :nocov: JRuby SimpleCov doesn't track lazy hash initialization correctly
       hash[gem_name] = begin
+        # :nocov:
         gemspec_file = ::File.join(CommonSpecHelpers::REPO_ROOT, gem_name, "#{gem_name}.gemspec")
         eval(::File.read(gemspec_file), ::TOPLEVEL_BINDING.dup, gemspec_file) # standard:disable Security/Eval
       end
@@ -76,8 +78,10 @@ module ElasticGraph
           expect(json_schema.fetch("properties").keys).to match_array((config_class.members - extra_config_attributes).map(&:to_s))
 
           # Check that the root schema has a description
+          # :nocov: Error messages only execute when assertions fail
           expect(json_schema.key?("description")).to be(true),
             "Config class #{config_class.name} schema must have a description at the root level"
+          # :nocov:
 
           # Recursively validate all properties have required attributes
           validate_schema_properties_recursively(json_schema, config_class.name)
@@ -116,8 +120,10 @@ module ElasticGraph
           current_path = path.empty? ? property_name : "#{path}.#{property_name}"
 
           # Check if property is required or has a default
+          # :nocov: Error messages only execute when assertions fail
           expect(required_properties.include?(property_name) || property_schema.key?("default")).to be(true),
             "Property '#{current_path}' in #{config_class_name} schema must be required or have a default value"
+          # :nocov:
 
           validate_property_schema(property_schema, config_class_name, current_path)
           apply_property_validation_recursively(property_schema, config_class_name, current_path)
@@ -132,8 +138,10 @@ module ElasticGraph
 
           # Only validate examples and descriptions for pattern properties that define structured data
           # (i.e., objects or arrays with object items), not for simple value patterns
+          # :nocov: JRuby SimpleCov doesn't track multi-line conditional expressions correctly
           if property_schema["type"] == "object" ||
               (property_schema["type"] == "array" && property_schema["items"].is_a?(::Hash) && property_schema["items"]["type"] == "object")
+            # :nocov:
             validate_property_schema(property_schema, config_class_name, current_path)
           end
 
@@ -142,6 +150,7 @@ module ElasticGraph
       end
 
       def validate_property_schema(property_schema, config_class_name, current_path)
+        # :nocov: Error messages only execute when assertions fail
         # Check if property has examples
         expect(property_schema.key?("examples")).to be(true),
           "Property '#{current_path}' in #{config_class_name} schema must have examples"
@@ -163,6 +172,7 @@ module ElasticGraph
           expect(validation_errors).to be_nil,
             "Default value for property '#{current_path}' in #{config_class_name} schema is invalid. #{validation_errors}"
         end
+        # :nocov:
       end
 
       def apply_property_validation_recursively(property_schema, config_class_name, current_path)

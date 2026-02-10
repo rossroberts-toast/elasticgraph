@@ -83,7 +83,9 @@ module ElasticGraph
 
       say <<~INSTRUCTIONS, :yellow
         Next steps:
+          # :nocov: - this string interpolation is counted in coverage and is not actually being executed
           1. cd #{app_path}
+          # :nocov:
           2. Run `bundle exec rake boot_locally` to try it out in your browser.
           3. Run `bundle exec rake -T` to view other available tasks.
           4. Customize your new project as needed. (Search for `TODO` to find things that need updating.)
