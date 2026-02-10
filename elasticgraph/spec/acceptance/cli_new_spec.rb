@@ -197,9 +197,9 @@ module ElasticGraph
     def override_gemfile_to_use_local_elasticgraph_gems
       # :nocov: JRuby SimpleCov doesn't track coverage of this line correctly despite it being executed
       with_env "ELASTICGRAPH_GEMS_PATH" => CommonSpecHelpers::REPO_ROOT do
-        # :nocov:
         yield
       end
+      # :nocov:
     end
 
     def all_committed_code_in(dir)
