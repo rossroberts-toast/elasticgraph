@@ -25,14 +25,7 @@ module ElasticGraph
 
         # @private
         def initialize(*args, **options)
-          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
-          # When options is empty, JRuby incorrectly passes it as an extra argument.
-          if options.empty?
-            super(*args)
-          else
-            super(*args, **options)
-          end
-
+          super(*args, **options)
           @runtime_metadata_overrides = {}
           @can_configure_index = true
           resolve_fields_with :get_record_field_value

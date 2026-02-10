@@ -34,13 +34,7 @@ module ElasticGraph
         :custom_timestamp_ranges
       )
         def initialize(ignore_routing_values:, **rest)
-          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
-          # When rest is empty, JRuby incorrectly passes it as an extra argument.
-          __skip__ = if rest.empty?
-            super(ignore_routing_values: ignore_routing_values.to_set)
-          else
-            super(ignore_routing_values: ignore_routing_values.to_set, **rest)
-          end
+          __skip__ = super(ignore_routing_values: ignore_routing_values.to_set, **rest)
 
           # Verify the custom ranges are disjoint.
           # Yeah, this is O(N^2), which isn't great, but we expect a _very_ small number of custom
@@ -54,14 +48,6 @@ module ElasticGraph
             end
 
           raise Errors::ConfigError, "Your configured `custom_timestamp_ranges` are not disjoint, as required."
-        end
-
-        def with(**updates)
-          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
-          # Ensure hash keys are in the same order as the Data fields.
-          merged = to_h.merge(updates)
-          ordered_data = self.class.members.to_h { |key| [key, merged[key]] }
-          self.class.new(**ordered_data)
         end
 
         def without_env_overrides
@@ -81,13 +67,10 @@ module ElasticGraph
         end
 
         def self.from(custom_timestamp_ranges:, **rest)
-          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
-          # When rest is empty, JRuby incorrectly passes it as an extra argument.
-          __skip__ = if rest.empty?
-            new(custom_timestamp_ranges: CustomTimestampRange.ranges_from(custom_timestamp_ranges))
-          else
-            new(custom_timestamp_ranges: CustomTimestampRange.ranges_from(custom_timestamp_ranges), **rest)
-          end
+          __skip__ = new(
+            custom_timestamp_ranges: CustomTimestampRange.ranges_from(custom_timestamp_ranges),
+            **rest
+          )
         end
 
         # Represents an index definition that is based on a custom timestamp range.
@@ -98,14 +81,6 @@ module ElasticGraph
             if time_set.empty?
               raise Errors::ConfigError, "Custom timestamp range with suffix `#{index_name_suffix}` is invalid: no timestamps exist in it."
             end
-          end
-
-          def with(**updates)
-            # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
-            # Ensure hash keys are in the same order as the Data fields.
-            merged = to_h.merge(updates)
-            ordered_data = self.class.members.to_h { |key| [key, merged[key]] }
-            self.class.new(**ordered_data)
           end
 
           def self.ranges_from(range_hashes)
