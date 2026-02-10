@@ -34,7 +34,13 @@ module ElasticGraph
         :custom_timestamp_ranges
       )
         def initialize(ignore_routing_values:, **rest)
-          __skip__ = super(ignore_routing_values: ignore_routing_values.to_set, **rest)
+          # Workaround for JRuby bug: https://github.com/jruby/jruby/issues/...
+          # When rest is empty, JRuby incorrectly passes it as an extra argument.
+          __skip__ = if rest.empty?
+            super(ignore_routing_values: ignore_routing_values.to_set)
+          else
+            super(ignore_routing_values: ignore_routing_values.to_set, **rest)
+          end
 
           # Verify the custom ranges are disjoint.
           # Yeah, this is O(N^2), which isn't great, but we expect a _very_ small number of custom
