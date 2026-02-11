@@ -160,9 +160,9 @@ module ElasticGraph
       $stdout.reopen(captured_io)
       $stderr.reopen(captured_io)
 
+      # :nocov: -- rescue clause is only executed when a test fails.
       begin
         ::ElasticGraph::CLI.start(["new", *argv])
-        # :nocov: -- rescue clause is only executed when a test fails.
       rescue ::Exception => ex # standard:disable Lint/RescueException
         captured_io.rewind
         output = captured_io.read

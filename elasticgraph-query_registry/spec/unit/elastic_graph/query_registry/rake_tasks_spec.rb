@@ -339,9 +339,11 @@ module ElasticGraph
       # The C parser (used on MRI Ruby) and Ruby parser (used on JRuby) produce different error formats.
       def parser_error_for_missing_lcurly
         if defined?(::GraphQL::CParser)
+          # :nocov: - one of these lines will never be covered as they run depending on which Ruby version is being executed. The CParser doesn't run with JRuby.
           'syntax error, unexpected IDENTIFIER ("parts"), expecting LCURLY at [2, 3]'
         else
           'Expected LCURLY, actual: IDENTIFIER ("parts") at [2, 3]'
+          # :nocov:
         end
       end
 
