@@ -50,7 +50,7 @@ module ElasticGraph
       end
 
       # C parser is only available on MRI Ruby (it's a C extension)
-      it "loads the GraphQL C parser for faster GraphQL parsing", :unless => RUBY_ENGINE == "jruby" do
+      it "loads the GraphQL C parser for faster GraphQL parsing", unless: RUBY_ENGINE == "jruby" do
         build_graphql.schema
 
         expect(::GraphQL.default_parser.name).to eq "GraphQL::CParser"
