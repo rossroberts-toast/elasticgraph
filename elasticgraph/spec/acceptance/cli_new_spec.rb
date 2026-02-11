@@ -13,12 +13,12 @@ module ElasticGraph
   ::RSpec.describe CLI, "new command", :in_temp_dir do
     # Skip on JRuby because bundler output format differs and the test validates exact output strings.
     it "initializes a new ElasticGraph project", unless: RUBY_ENGINE == "jruby" do
+      # :nocov: -- entire test skipped on JRuby
       override_gemfile_to_use_local_elasticgraph_gems do
         # Note: this is intentionally a relative path, in contrast to the absolute path
         # used by the `supports absolute paths` example.
         output = run_new("musical_artists1")
 
-        # :nocov: SimpleCov on JRuby incorrectly counts heredoc string interpolation as executable code
         expect(output.lines.first(18).join).to eq <<~EOS
           Creating a new OpenSearch ElasticGraph project called 'musical_artists1' at: #{::Dir.pwd}/musical_artists1
                 create  musical_artists1
@@ -39,7 +39,6 @@ module ElasticGraph
                 create  musical_artists1/lib/musical_artists1/shared_factories.rb
                    run  bundle install from "./musical_artists1"
         EOS
-        # :nocov:
 
         bundle_exec_rake_line = output.lines.index { |l| l =~ /bundle exec rake/ }
         expect(output.lines[bundle_exec_rake_line..(bundle_exec_rake_line + 16)].join).to eq <<~EOS
@@ -79,6 +78,7 @@ module ElasticGraph
         # Verify that the only TODO comments in the project comte from our template, not from our generated artifacts.
         expect(todo_comments_in("musical_artists1").join("\n")).to eq(todo_comments_in(CLI.source_root).join("\n"))
       end
+      # :nocov:
     end
 
     it "aborts if given an invalid datastore option" do
@@ -203,6 +203,7 @@ module ElasticGraph
       # :nocov:
     end
 
+    # :nocov: -- only used by the JRuby-skipped test above
     def all_committed_code_in(dir)
       ::Dir.chdir(dir) { `git ls-files -z | xargs -0 cat` }
     end
@@ -214,5 +215,6 @@ module ElasticGraph
         end
       end
     end
+    # :nocov:
   end
 end

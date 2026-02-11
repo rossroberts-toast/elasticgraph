@@ -47,9 +47,8 @@ module ElasticGraph
       # - From our Dockerfile -- we want it to build the docker image from our local gems.
       gemfile_elasticgraph_details_code_snippet = %(["#{VERSION}"])
       if (eg_gems_path = ENV["ELASTICGRAPH_GEMS_PATH"])
+        # :nocov: -- only covered by the JRuby-skipped acceptance test
         gemfile_elasticgraph_details_code_snippet = %([path: "#{eg_gems_path}"])
-        # :nocov: -- our tests always override `gemfile_elasticgraph_details_code_snippet` using the ENV var.
-      else
         # :nocov:
       end
 
@@ -70,8 +69,10 @@ module ElasticGraph
 
       inside new_app_path do
         ::Bundler.with_unbundled_env do
+          # :nocov: -- only covered by the JRuby-skipped acceptance test
           run "bundle install"
           run "bundle exec rake schema_artifacts:dump query_registry:dump_variables:all build"
+          # :nocov:
         end
 
         run "git init"
