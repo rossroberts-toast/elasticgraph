@@ -58,9 +58,15 @@ module ElasticGraph
             setter_location = _ = schema_definition_results.json_schema_version_setter_location
             # Use realpath to resolve symlinks (e.g., /var -> /private/var on macOS) so that
             # relative_path_from works correctly. JRuby can resolve paths differently than MRI.
-            absolute_path = ::File.realpath(setter_location.absolute_path.to_s)
-            current_dir = ::File.realpath(::Dir.pwd)
-            setter_location_path = ::Pathname.new(absolute_path).relative_path_from(current_dir)
+            # However, realpath requires the file to exist, so we fall back to the original path
+            # if it fails (e.g., in tests using temp directories that get cleaned up).
+            setter_location_path = begin
+              absolute_path = ::File.realpath(setter_location.absolute_path.to_s)
+              current_dir = ::File.realpath(::Dir.pwd)
+              ::Pathname.new(absolute_path).relative_path_from(current_dir)
+            rescue Errno::ENOENT
+              ::Pathname.new(setter_location.absolute_path.to_s).relative_path_from(::Dir.pwd)
+            end
 
             abort "A change has been attempted to `json_schemas.yaml`, but the `json_schema_version` has not been correspondingly incremented. Please " \
               "increase the schema's version, and then run the `bundle exec rake schema_artifacts:dump` command again.\n\n" \
