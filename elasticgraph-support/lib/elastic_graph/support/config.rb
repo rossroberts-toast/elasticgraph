@@ -163,7 +163,13 @@ module ElasticGraph
           end
 
           config = config.transform_keys(&:to_sym)
-          __skip__ = super(**convert_values(**config))
+          converted = convert_values(**config)
+          # JRuby has a bug where Data#to_h returns values in the order kwargs were passed,
+          # not in member order. Reorder to match member order to work around this.
+          if RUBY_ENGINE == "jruby"
+            converted = klass.members.to_h { |m| [m, converted.fetch(m)] }
+          end
+          __skip__ = super(**converted)
         end
 
         # Overrides `#with` to bypass the normal JSON schema validation that applies in `#initialize`.

@@ -10,11 +10,15 @@
 #
 # Problem: JRuby 10.0.2.0's Data class doesn't handle splat args with keyword args
 # the same way as MRI Ruby 3.4. Specifically, calling new(*args, **kwargs) where
-# both args and kwargs are provided causes issues, and kwargs order is not preserved.
+# both args and kwargs are provided causes issues. Additionally, the Data#initialize
+# method also has issues with keyword arguments.
 #
-# This patch wraps Data.define to make the new method more flexible.
+# This patch wraps Data.define to make both new and initialize methods work correctly
+# by always using positional arguments internally.
 
 if RUBY_ENGINE == "jruby"
+  puts "[JRuby Compatibility] Loading Data class compatibility layer..."
+
   # Store original Data.define
   class Data
     class << self
@@ -24,43 +28,44 @@ if RUBY_ENGINE == "jruby"
         # Call original define
         data_class = jruby_original_define(*member_names, &block)
 
-        # Store the original initialize to wrap it
-        original_initialize = data_class.instance_method(:initialize)
+        # Get the original new as an unbound method to preserve class context
+        original_new = data_class.singleton_class.instance_method(:new)
 
-        # Override initialize to reorder kwargs before processing
-        data_class.define_method(:initialize) do |*args, **kwargs|
-          # JRuby bug: kwargs don't preserve member order, causing wrong field assignment
-          # Solution: reorder kwargs to match member order before calling original
-          klass = self.class
+        # Override new to handle both positional and keyword arguments flexibly
+        # Always convert to positional args to avoid JRuby bugs
+        data_class.define_singleton_method(:new) do |*args, **kwargs|
+          # Get reference to the data class (self in this context)
+          klass = self
 
-          if args.empty? && !kwargs.empty?
-            # Only kwargs - reorder to match member order
-            # Only include keys that were actually provided (to preserve defaults)
-            ordered_kwargs = {}
-            klass.members.each do |member|
-              ordered_kwargs[member] = kwargs[member] if kwargs.key?(member)
-            end
-            original_initialize.bind(self).call(**ordered_kwargs)
-          elsif !args.empty? && kwargs.empty?
-            # Only positional args
-            original_initialize.bind(self).call(*args)
-          elsif !args.empty? && !kwargs.empty?
-            # Both - merge and reorder
-            positional_as_kwargs = klass.members[0...args.size].zip(args).to_h
-            merged = positional_as_kwargs.merge(kwargs)
-            ordered_kwargs = {}
-            klass.members.each do |member|
-              ordered_kwargs[member] = merged[member] if merged.key?(member)
-            end
-            original_initialize.bind(self).call(**ordered_kwargs)
-          else
-            # Both empty
-            original_initialize.bind(self).call
+          # Case 1: Only positional args (normal case) - pass through
+          if kwargs.empty?
+            return original_new.bind_call(klass, *args)
           end
+
+          # Case 2: Only keyword args - pass through as kwargs
+          # The JRuby bug is specifically with mixed positional+keyword args, not pure kwargs.
+          # Pure kwargs need to pass through so that custom initialize can merge defaults.
+          if args.empty?
+            return original_new.bind_call(klass, **kwargs)
+          end
+
+          # Case 3: Both positional and keyword args (merge them)
+          # Assume positional args come first, then fill remaining with kwargs
+          merged_args = args.dup
+
+          # Add missing members from kwargs
+          remaining_members = klass.members[args.size..] || []
+          remaining_members.each do |member|
+            merged_args << kwargs[member] if kwargs.key?(member)
+          end
+
+          original_new.bind_call(klass, *merged_args)
         end
 
         data_class
       end
     end
   end
+
+  puts "[JRuby Compatibility] Data class patched successfully"
 end
