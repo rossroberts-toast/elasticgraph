@@ -145,7 +145,7 @@ module ElasticGraph
             For client `client_jane`:
               - CountParts.graphql (1 operation):
                 - (no operation name): 🛑. Got 1 validation error:
-                  1) syntax error, unexpected IDENTIFIER ("parts"), expecting LCURLY at [2, 3]
+                  1) #{parser_error_for_missing_lcurly}
                      source: query_registry/client_jane/CountParts.graphql:2:3
           EOS
         end
@@ -332,6 +332,16 @@ module ElasticGraph
 
         def expected_dumped_content_for(query_name)
           {query_name => {"ids" => "[ID!]"}}
+        end
+      end
+
+      # Returns the expected parser error message for a missing LCURLY token.
+      # The C parser (used on MRI Ruby) and Ruby parser (used on JRuby) produce different error formats.
+      def parser_error_for_missing_lcurly
+        if defined?(::GraphQL::CParser)
+          'syntax error, unexpected IDENTIFIER ("parts"), expecting LCURLY at [2, 3]'
+        else
+          'Expected LCURLY, actual: IDENTIFIER ("parts") at [2, 3]'
         end
       end
 
