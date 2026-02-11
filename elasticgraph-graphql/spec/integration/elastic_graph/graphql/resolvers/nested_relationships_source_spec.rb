@@ -227,7 +227,7 @@ module ElasticGraph
               }
             )
 
-            dataloader.with(NestedRelationshipsSource, query:, join:, context:, monotonic_clock:).load_all(value_sets.map(&:to_set))
+            dataloader.with(NestedRelationshipsSource, query, join, context, monotonic_clock).load_all(value_sets.map(&:to_set))
           end
         end
       end

@@ -60,7 +60,7 @@ module ElasticGraph
         # isn't particularly expensive, compared to needing to re-run an extra query.
         EXTRA_SIZE_MULTIPLIER = 4
 
-        def initialize(query:, join:, context:, monotonic_clock:)
+        def initialize(query, join, context, monotonic_clock)
           @query = query
           @join = join
           @filter_id_field_name_path = @join.filter_id_field_name.split(".")
@@ -77,7 +77,7 @@ module ElasticGraph
         end
 
         def self.execute_one(ids, query:, join:, context:, monotonic_clock:)
-          context.dataloader.with(self, query:, join:, context:, monotonic_clock:).load(ids)
+          context.dataloader.with(self, query, join, context, monotonic_clock).load(ids)
         end
 
         private

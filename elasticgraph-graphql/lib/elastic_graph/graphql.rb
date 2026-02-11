@@ -12,6 +12,10 @@ require "elastic_graph/constants"
 require "elastic_graph/support/from_yaml_file"
 require "elastic_graph/support/graphql_gem_loader"
 
+# Load the graphql gem with C parser support BEFORE any other file has a chance
+# to `require "graphql"` directly. This ensures optimal parsing performance.
+ElasticGraph::Support::GraphQLGemLoader.load
+
 module ElasticGraph
   # The main entry point for ElasticGraph GraphQL handling. Instantiate this to get access to the
   # different parts of this library.

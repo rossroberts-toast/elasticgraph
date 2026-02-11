@@ -16,7 +16,8 @@ module ElasticGraph
       end
 
       describe ".load" do
-        it "prints a yellow warning to stderr when graphql-c_parser is unavailable" do
+        # On JRuby, the warning is intentionally suppressed because C extensions don't work
+        it "prints a yellow warning to stderr when graphql-c_parser is unavailable", :unless => RUBY_ENGINE == "jruby" do
           simulate_missing_gems "graphql/c_parser"
 
           expect {
@@ -24,7 +25,8 @@ module ElasticGraph
           }.to output(/\[ElasticGraph\] For better performance, add `graphql-c_parser` to your Gemfile/).to_stderr
         end
 
-        it "prints the warning only once across multiple calls" do
+        # On JRuby, the warning is intentionally suppressed because C extensions don't work
+        it "prints the warning only once across multiple calls", :unless => RUBY_ENGINE == "jruby" do
           simulate_missing_gems "graphql/c_parser"
 
           stderr_output = StringIO.new
@@ -40,6 +42,14 @@ module ElasticGraph
           end
 
           expect(stderr_output.string.scan("graphql-c_parser").size).to eq(1)
+        end
+
+        it "does not print a warning on JRuby even when c_parser fails to load", :if => RUBY_ENGINE == "jruby" do
+          simulate_missing_gems "graphql/c_parser"
+
+          expect {
+            GraphQLGemLoader.load
+          }.not_to output.to_stderr
         end
 
         it "still raises if the graphql gem is unavailable" do
