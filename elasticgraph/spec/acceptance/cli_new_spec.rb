@@ -11,7 +11,8 @@ require "tempfile"
 
 module ElasticGraph
   ::RSpec.describe CLI, "new command", :in_temp_dir do
-    it "initializes a new ElasticGraph project" do
+    # Skip on JRuby because bundler output format differs and the test validates exact output strings.
+    it "initializes a new ElasticGraph project", :unless => RUBY_ENGINE == "jruby" do
       override_gemfile_to_use_local_elasticgraph_gems do
         # Note: this is intentionally a relative path, in contrast to the absolute path
         # used by the `supports absolute paths` example.
