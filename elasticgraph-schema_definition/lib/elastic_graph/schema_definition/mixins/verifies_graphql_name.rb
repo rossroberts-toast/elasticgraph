@@ -18,20 +18,7 @@ module ElasticGraph
       module VerifiesGraphQLName
         # @private
         def initialize(*args, **kwargs)
-          if RUBY_ENGINE == "jruby"
-            # On JRuby, convert keyword args to positional args to avoid splat forwarding bug
-            if kwargs.any? && args.empty?
-              positional_args = self.class.members.map { |member| kwargs.fetch(member) }
-              __skip__ = super(*positional_args) # __skip__ tells Steep to ignore this
-            else
-              # Already positional args
-              __skip__ = super(*args) # __skip__ tells Steep to ignore this
-            end
-          else
-            # On MRI, explicitly forward both positional and keyword args
-            __skip__ = super(*args, **kwargs) # __skip__ tells Steep to ignore this
-          end
-
+          __skip__ = super(*args, **kwargs) # __skip__ tells Steep to ignore this
           VerifiesGraphQLName.verify_name!(name)
         end
 
