@@ -17,8 +17,20 @@ module ElasticGraph
       # the GraphQL name pattern as the object is built.
       module VerifiesGraphQLName
         # @private
-        def initialize(...)
-          __skip__ = super(...) # __skip__ tells Steep to ignore this
+        def initialize(*args, **kwargs)
+          if RUBY_ENGINE == "jruby"
+            # On JRuby, convert keyword args to positional args to avoid splat forwarding bug
+            if kwargs.any? && args.empty?
+              positional_args = self.class.members.map { |member| kwargs.fetch(member) }
+              __skip__ = super(*positional_args) # __skip__ tells Steep to ignore this
+            else
+              # Already positional args
+              __skip__ = super(*args) # __skip__ tells Steep to ignore this
+            end
+          else
+            # On MRI, use normal forwarding
+            __skip__ = super(...) # __skip__ tells Steep to ignore this
+          end
 
           VerifiesGraphQLName.verify_name!(name)
         end
