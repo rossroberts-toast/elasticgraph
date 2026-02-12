@@ -20,10 +20,13 @@ if RUBY_ENGINE == "jruby"
   puts "[JRuby Compatibility] Loading Data class compatibility layer..."
 
   # Store original Data.define
+  # @private
   class Data
     class << self
+      # @private
       alias_method :jruby_original_define, :define
 
+      # @private
       def define(*member_names, &block)
         # Call original define
         data_class = jruby_original_define(*member_names, &block)
