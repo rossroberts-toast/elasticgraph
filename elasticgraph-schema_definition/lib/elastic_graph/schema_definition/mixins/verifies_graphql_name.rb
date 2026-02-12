@@ -28,8 +28,8 @@ module ElasticGraph
               __skip__ = super(*args) # __skip__ tells Steep to ignore this
             end
           else
-            # On MRI, use normal forwarding
-            __skip__ = super(...) # __skip__ tells Steep to ignore this
+            # On MRI, explicitly forward both positional and keyword args
+            __skip__ = super(*args, **kwargs) # __skip__ tells Steep to ignore this
           end
 
           VerifiesGraphQLName.verify_name!(name)
