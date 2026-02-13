@@ -5,11 +5,14 @@ module ElasticGraph
         MAX_OPTIMIZED_ATTEMPTS: ::Integer
         EXTRA_SIZE_MULTIPLIER: ::Integer
 
+        # JRuby has a bug where keyword argument forwarding can convert kwargs into a
+        # positional Hash argument. The method accepts both patterns to work around this.
         def initialize: (
-          query: DatastoreQuery,
-          join: Schema::RelationJoin,
-          context: ::GraphQL::Query::Context,
-          monotonic_clock: Support::MonotonicClock
+          *untyped args,
+          ?query: DatastoreQuery?,
+          ?join: Schema::RelationJoin?,
+          ?context: ::GraphQL::Query::Context?,
+          ?monotonic_clock: Support::MonotonicClock?
         ) -> void
 
         @query: DatastoreQuery
