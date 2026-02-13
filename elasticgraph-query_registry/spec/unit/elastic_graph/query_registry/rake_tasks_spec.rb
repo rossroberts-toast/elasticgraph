@@ -112,42 +112,46 @@ module ElasticGraph
             run_validate_task(after_dumping_variables: true)
           }.to raise_error(a_string_including("Found 4 validation errors total across all queries."))
 
-          expect(last_task_output.string.strip).to eq(<<~EOS.strip)
-            For client `client_bob`:
-              - CountComponents.graphql (2 operations):
-                - CountComponents: 🛑. Got 2 validation errors:
-                  1) Field 'total_edge_count2' doesn't exist on type 'ComponentConnection' (Did you mean `total_edge_count`?)
-                     path: query CountComponents.components.total_edge_count2
-                     source: query_registry/client_bob/CountComponents.graphql:3:5
-                     code: undefinedField
-                     typeName: ComponentConnection
-                     fieldName: total_edge_count2
+          # The syntax error message format differs between the C parser and Ruby parser:
+          # - C parser: `syntax error, unexpected IDENTIFIER ("parts"), expecting LCURLY at [2, 3]`
+          # - Ruby parser: `Expected LCURLY, actual: IDENTIFIER ("parts") at [2, 3]`
+          # JRuby can't use the C parser, so we need to accept both formats.
+          syntax_error_pattern = '(syntax error, unexpected IDENTIFIER \("parts"\), expecting LCURLY|Expected LCURLY, actual: IDENTIFIER \("parts"\)) at \[2, 3\]'
 
-                  2) Field 'widgets' doesn't accept argument 'foo'
-                     path: query CountComponents.widgets.foo
-                     source: query_registry/client_bob/CountComponents.graphql:5:11
-                     code: argumentNotAccepted
-                     name: widgets
-                     typeName: Field
-                     argumentName: foo
+          expect(last_task_output.string.strip).to match(/\AFor client `client_bob`:
+  - CountComponents\.graphql \(2 operations\):
+    - CountComponents: 🛑\. Got 2 validation errors:
+      1\) Field 'total_edge_count2' doesn't exist on type 'ComponentConnection' \(Did you mean `total_edge_count`\?\)
+         path: query CountComponents\.components\.total_edge_count2
+         source: query_registry\/client_bob\/CountComponents\.graphql:3:5
+         code: undefinedField
+         typeName: ComponentConnection
+         fieldName: total_edge_count2
 
-                - AnotherBadQuery: 🛑. Got 1 validation error:
-                  1) Field 'foo' doesn't exist on type 'Query'
-                     path: query AnotherBadQuery.w1
-                     source: query_registry/client_bob/CountComponents.graphql:11:3
-                     code: undefinedField
-                     typeName: Query
-                     fieldName: foo
+      2\) Field 'widgets' doesn't accept argument 'foo'
+         path: query CountComponents\.widgets\.foo
+         source: query_registry\/client_bob\/CountComponents\.graphql:5:11
+         code: argumentNotAccepted
+         name: widgets
+         typeName: Field
+         argumentName: foo
 
-              - CountWidgets.graphql (1 operation):
-                - CountWidgets: ✅
+    - AnotherBadQuery: 🛑\. Got 1 validation error:
+      1\) Field 'foo' doesn't exist on type 'Query'
+         path: query AnotherBadQuery\.w1
+         source: query_registry\/client_bob\/CountComponents\.graphql:11:3
+         code: undefinedField
+         typeName: Query
+         fieldName: foo
 
-            For client `client_jane`:
-              - CountParts.graphql (1 operation):
-                - (no operation name): 🛑. Got 1 validation error:
-                  1) syntax error, unexpected IDENTIFIER ("parts"), expecting LCURLY at [2, 3]
-                     source: query_registry/client_jane/CountParts.graphql:2:3
-          EOS
+  - CountWidgets\.graphql \(1 operation\):
+    - CountWidgets: ✅
+
+For client `client_jane`:
+  - CountParts\.graphql \(1 operation\):
+    - \(no operation name\): 🛑\. Got 1 validation error:
+      1\) #{syntax_error_pattern}
+         source: query_registry\/client_jane\/CountParts\.graphql:2:3\z/)
         end
 
         it "does not allow a single client to use the same operation name on two queries, since we want operation names to be human readable unique identifiers" do
