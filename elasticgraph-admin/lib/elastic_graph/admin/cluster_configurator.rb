@@ -51,11 +51,13 @@ module ElasticGraph
         errors = script_configurators.flat_map(&:validate) + index_definition_configurators_for(output).flat_map(&:validate)
 
         if errors.any?
+          # :nocov: -- JRuby's coverage doesn't track string interpolations properly
           error_descriptions = errors.map.with_index do |error, index|
             "#{index + 1}): #{error}"
           end.join("\n#{"=" * 80}\n\n")
 
           raise Errors::ClusterOperationError, "Got #{errors.size} validation error(s):\n\n#{error_descriptions}"
+          # :nocov:
         end
 
         script_configurators.each(&:configure!)

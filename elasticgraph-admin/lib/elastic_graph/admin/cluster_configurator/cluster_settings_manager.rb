@@ -42,9 +42,11 @@ module ElasticGraph
         # `cluster_spec` can be the name of a specific cluster (as a string) or `:all_clusters`.
         def end_index_maintenance_mode!(cluster_spec)
           cluster_names_for(cluster_spec).each do |cluster_name|
+            # :nocov: -- JRuby's coverage doesn't track string interpolations properly
             datastore_client_named(cluster_name).put_persistent_cluster_settings(
               desired_cluster_settings(cluster_name, auto_create_index_patterns: ["*#{ROLLOVER_INDEX_INFIX_MARKER}*"])
             )
+            # :nocov:
           end
         end
 
@@ -69,6 +71,7 @@ module ElasticGraph
 
         private
 
+        # :nocov: -- JRuby's coverage doesn't track hash literals and string interpolations properly
         def desired_cluster_settings(cluster_name, auto_create_index_patterns: [])
           {
             # https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-creation
@@ -79,11 +82,14 @@ module ElasticGraph
             "action.auto_create_index" => ([".kibana*"] + auto_create_index_patterns).map { |p| "+#{p}" }.join(",")
           }.merge(@datastore_config.clusters.fetch(cluster_name).settings)
         end
+        # :nocov:
 
         def datastore_client_named(cluster_name)
           @datastore_clients_by_name.fetch(cluster_name) do
+            # :nocov: -- JRuby's coverage doesn't track block contents and string interpolations properly
             raise Errors::ClusterOperationError,
               "Unknown datastore cluster name: `#{cluster_name}`. Valid cluster names: #{@datastore_clients_by_name.keys}"
+            # :nocov:
           end
         end
 

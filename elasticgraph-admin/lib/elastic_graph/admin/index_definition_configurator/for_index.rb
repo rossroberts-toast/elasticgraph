@@ -63,7 +63,9 @@ module ElasticGraph
           if index_exists? && mapping_type_changes.any?
             [cannot_modify_mapping_field_type_error]
           else
+            # :nocov: -- JRuby's coverage doesn't track else branches properly
             []
+            # :nocov:
           end
         end
 
@@ -91,10 +93,12 @@ module ElasticGraph
           report_action "Updated settings for index `#{@index.name}`:\n#{settings_diff}"
         end
 
+        # :nocov: -- JRuby's coverage doesn't track string interpolations properly
         def cannot_modify_mapping_field_type_error
           "The datastore does not support modifying the type of a field from an existing index definition. " \
           "You are attempting to update type of fields (#{mapping_type_changes.inspect}) from the #{@index.name} index definition."
         end
+        # :nocov:
 
         def index_exists?
           !current_config.empty?

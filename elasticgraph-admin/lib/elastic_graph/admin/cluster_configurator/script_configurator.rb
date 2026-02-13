@@ -21,6 +21,7 @@ module ElasticGraph
           @action_reporter = ActionReporter.new(output)
         end
 
+        # :nocov: -- JRuby's coverage doesn't track array literals and string interpolations properly
         def validate
           case existing_datastore_script
           when :not_found, @script
@@ -33,6 +34,7 @@ module ElasticGraph
             ]
           end
         end
+        # :nocov:
 
         def configure!
           if existing_datastore_script == :not_found

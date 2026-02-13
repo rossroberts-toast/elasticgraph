@@ -42,6 +42,7 @@ module ElasticGraph
         admin = admin_for(schema_def) do |config|
           expect(config.clusters.keys).to include("main", "other1", "other2", "other3")
 
+          # :nocov: -- JRuby's coverage doesn't track string interpolations properly
           config.with(index_definitions: {
             unique_index_name => config_index_def_of(
               query_cluster: "main",
@@ -52,6 +53,7 @@ module ElasticGraph
               index_into_clusters: ["other1"] # does not include `other2` or `other3`
             )
           })
+          # :nocov:
         end
 
         expect {
@@ -66,16 +68,19 @@ module ElasticGraph
         expect(tallied_datastore_calls("other2")).to include("/_cluster/settings" => 2).and include("/#{unique_index_name}").and exclude("/#{unique_index_name}2")
         expect(tallied_datastore_calls("other3")).to include("/_cluster/settings" => 2).and exclude("/#{unique_index_name}", "/#{unique_index_name}2")
 
+        # :nocov: -- JRuby's coverage doesn't track string interpolations properly
         expect(admin.cluster_configurator.accessible_index_definitions.map(&:name)).to contain_exactly(
           unique_index_name,
           "#{unique_index_name}2"
         )
+        # :nocov:
       end
 
       it "makes no attempt to configure indices that are inaccessible due to residing on inaccessible clusters" do
         admin = admin_for(schema_def) do |config|
           expect(config.clusters.keys).to contain_exactly("main", "other1", "other2", "other3")
 
+          # :nocov: -- JRuby's coverage doesn't track string interpolations properly
           config.with(index_definitions: {
             unique_index_name => config_index_def_of(
               query_cluster: "main",
@@ -86,6 +91,7 @@ module ElasticGraph
               index_into_clusters: ["undefined"]
             )
           })
+          # :nocov:
         end
 
         expect {
@@ -207,6 +213,7 @@ module ElasticGraph
           }.to raise_error Errors::ClusterOperationError, a_string_including("already exists in the datastore but has different contents", "a leading comment")
         end
 
+        # :nocov: -- JRuby's coverage doesn't track filter_map blocks properly
         def fetch_schema_specific_update_scripts
           schema_specific_update_scripts.filter_map do |id, artifact_script|
             if (fetched_script = main_datastore_client.get_script(id: id))
@@ -214,6 +221,7 @@ module ElasticGraph
             end
           end.to_h
         end
+        # :nocov:
 
         def delete_all_schema_specific_update_scripts
           schema_specific_update_scripts.each do |id, script|

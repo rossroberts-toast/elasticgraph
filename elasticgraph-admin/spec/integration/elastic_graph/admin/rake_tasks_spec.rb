@@ -26,6 +26,7 @@ module ElasticGraph
           end
 
           it "works when the cluster configuration has omitted a named cluster" do
+            # :nocov: -- JRuby's coverage doesn't track string interpolations properly
             admin = build_admin(index_definitions: {
               unique_index_name => config_index_def_of,
               "#{unique_index_name}2" => config_index_def_of(
@@ -34,6 +35,7 @@ module ElasticGraph
                 index_into_clusters: ["undefined"]
               )
             })
+            # :nocov:
 
             expect {
               output = run_rake(admin, "clusters:configure:perform")

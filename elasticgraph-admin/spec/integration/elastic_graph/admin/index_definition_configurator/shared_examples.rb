@@ -221,6 +221,7 @@ module ElasticGraph
         end
 
         it "maintains `_meta.ElasticGraph.sources` as a stateful append-only-set that remembers sources that were once active but we no longer have" do
+          # :nocov: -- JRuby's coverage doesn't track block contents properly
           expect {
             configure_index_definition(schema_def(
               configure_widget: lambda do |t|
@@ -258,6 +259,7 @@ module ElasticGraph
           }.to change { get_index_definition_configuration(unique_index_name).dig("mappings", "_meta") }
             .from({"ElasticGraph" => {"sources" => ["__self", "owner"]}})
             .to({"ElasticGraph" => {"sources" => ["__self", "owner", "owner2"]}})
+          # :nocov:
         end
 
         it "allows index sorting to be configured so long as there are no fields using the `nested` mapping type" do
