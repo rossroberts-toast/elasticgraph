@@ -190,7 +190,7 @@ module ElasticGraph
                   "PUT #{put_index_template_definition_url(unique_index_name)}",
                   "PUT #{put_index_definition_url(concrete_index_name_for_now(unique_index_name), :mappings)}",
                   "PUT #{put_index_definition_url(concrete_index_name, :mappings)}")
-                # :nocov:
+              # :nocov:
             end
 
             it "propagates setting changes to the derived concrete rollover indices" do
@@ -207,7 +207,7 @@ module ElasticGraph
                   "PUT #{put_index_template_definition_url(unique_index_name)}",
                   "PUT #{put_index_definition_url(concrete_index_name_for_now(unique_index_name), :settings)}",
                   "PUT #{put_index_definition_url(concrete_index_name, :settings)}")
-                # :nocov:
+              # :nocov:
             end
 
             it "fails before any changes are made if the changes can't be propagated to the concrete rollover indices" do
