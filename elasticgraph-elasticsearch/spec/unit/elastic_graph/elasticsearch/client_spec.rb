@@ -15,7 +15,9 @@ module ElasticGraph
       # Skip on JRuby due to incompatibilities with the Elasticsearch Ruby client's
       # transport layer and product verification. The OpenSearch client tests provide
       # equivalent coverage on JRuby, and CRuby tests ensure full coverage.
+      # :nocov: -- JRuby-specific skip, can't be covered by MRI
       before { skip "Elasticsearch client tests not supported on JRuby" if RUBY_ENGINE == "jruby" }
+      # :nocov:
 
       it_behaves_like "a datastore client" do
         def define_stubs(stub, requested_stubs)
