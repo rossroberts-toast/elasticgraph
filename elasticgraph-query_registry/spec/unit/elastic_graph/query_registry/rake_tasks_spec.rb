@@ -118,7 +118,7 @@ module ElasticGraph
           # JRuby can't use the C parser, so we need to accept both formats.
           syntax_error_pattern = '(syntax error, unexpected IDENTIFIER \("parts"\), expecting LCURLY|Expected LCURLY, actual: IDENTIFIER \("parts"\)) at \[2, 3\]'
 
-          expect(last_task_output.string.strip).to match(/\AFor client `client_bob`:
+          expect(last_task_output.string.strip).to match(/\A(?:For) client `client_bob`:
   - CountComponents\.graphql \(2 operations\):
     - CountComponents: 🛑\. Got 2 validation errors:
       1\) Field 'total_edge_count2' doesn't exist on type 'ComponentConnection' \(Did you mean `total_edge_count`\?\)
