@@ -50,6 +50,8 @@ module ElasticGraph
       end
 
       it "loads the GraphQL C parser for faster GraphQL parsing" do
+        skip "C extensions not available on JRuby" if RUBY_ENGINE == "jruby"
+
         build_graphql.schema
 
         expect(::GraphQL.default_parser.name).to eq "GraphQL::CParser"
