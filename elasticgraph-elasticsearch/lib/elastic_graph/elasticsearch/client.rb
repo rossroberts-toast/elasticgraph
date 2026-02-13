@@ -60,7 +60,12 @@ module ElasticGraph
         #
         # Without this, we would instead get an error when the client was used to make
         # a request for the first time, which isn't as ideal.
-        @raw_client.transport.connections.each { |c| c.connection.app }
+        #
+        # :nocov: -- JRuby has Faraday/transport layer incompatibilities that cause this to fail
+        unless RUBY_ENGINE == "jruby"
+          @raw_client.transport.connections.each { |c| c.connection.app }
+        end
+        # :nocov:
       end
 
       # Cluster APIs
