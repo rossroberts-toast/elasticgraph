@@ -50,7 +50,9 @@ module ElasticGraph
       end
 
       it "loads the GraphQL C parser for faster GraphQL parsing" do
+        # :nocov: -- branch is only taken on JRuby, not MRI
         skip "C extensions not available on JRuby" if RUBY_ENGINE == "jruby"
+        # :nocov:
 
         build_graphql.schema
 

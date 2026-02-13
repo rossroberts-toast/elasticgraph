@@ -105,7 +105,9 @@ module ElasticGraph
         resolved_pwd = ::File.realpath(::Dir.pwd)
         ::Pathname.new(resolved_path).relative_path_from(resolved_pwd)
       rescue Errno::ENOENT, ArgumentError
+        # :nocov: -- fallback for when the file doesn't exist
         absolute_path
+        # :nocov:
       end
 
       def artifacts
