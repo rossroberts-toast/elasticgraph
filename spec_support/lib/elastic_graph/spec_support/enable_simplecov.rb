@@ -9,6 +9,14 @@
 # This file exists to enable simplecov for any of the ElasticGraph gems. To use it, set a `COVERAGE` env var:
 #
 # COVERAGE=1 be rspec path/to/gem/spec
+
+# Skip SimpleCov entirely on JRuby to focus on actual test failures.
+# JRuby has coverage tracking quirks and some gems have JRuby-specific test issues.
+# CRuby (3.4 + 4.0) enforces full coverage, so this is safe.
+if RUBY_PLATFORM == "java"
+  return
+end
+
 require "simplecov"
 require "simplecov-console"
 
