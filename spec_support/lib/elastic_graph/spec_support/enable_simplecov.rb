@@ -118,8 +118,10 @@ SimpleCov.start do
   gems_being_tested_globs = gems_being_tested_dirs.flat_map { |dir| [dir / "lib/**/*.rb", dir / "spec/**/*.rb"] }
   track_files "{#{gems_being_tested_globs.join(",")}}"
 
-  enable_coverage :branch
-  minimum_coverage line: 100, branch: 100
+  # Disable branch coverage on JRuby due to compatibility issues: https://github.com/jruby/jruby/issues/5147
+  enable_coverage :branch unless RUBY_PLATFORM == "java"
+  minimum_coverage line: 100
+  minimum_coverage branch: 100 unless RUBY_PLATFORM == "java"
 
   merge_timeout 1800 # 30 minutes. CI jobs can take 15-20 minutes.
 end
