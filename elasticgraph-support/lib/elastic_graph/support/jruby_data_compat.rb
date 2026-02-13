@@ -16,9 +16,8 @@
 # This patch wraps Data.define to make both new and initialize methods work correctly
 # by always using positional arguments internally.
 
+# :nocov: -- JRuby-specific code only runs under JRuby
 if RUBY_ENGINE == "jruby"
-  puts "[JRuby Compatibility] Loading Data class compatibility layer..."
-
   # Store original Data.define
   # @private
   class Data
@@ -69,6 +68,5 @@ if RUBY_ENGINE == "jruby"
       end
     end
   end
-
-  puts "[JRuby Compatibility] Data class patched successfully"
 end
+# :nocov:

@@ -60,7 +60,19 @@ module ElasticGraph
         # isn't particularly expensive, compared to needing to re-run an extra query.
         EXTRA_SIZE_MULTIPLIER = 4
 
-        def initialize(query:, join:, context:, monotonic_clock:)
+        # JRuby has a bug where keyword argument forwarding can convert kwargs into a
+        # positional Hash argument. This method accepts both patterns to work around this.
+        # :nocov: -- JRuby-specific workaround is only exercised under JRuby
+        def initialize(*args, query: nil, join: nil, context: nil, monotonic_clock: nil)
+          # Handle JRuby bug: if we got a single positional Hash instead of kwargs
+          if args.length == 1 && args[0].is_a?(::Hash)
+            kwargs = args[0]
+            query ||= kwargs[:query]
+            join ||= kwargs[:join]
+            context ||= kwargs[:context]
+            monotonic_clock ||= kwargs[:monotonic_clock]
+          end
+          # :nocov:
           @query = query
           @join = join
           @filter_id_field_name_path = @join.filter_id_field_name.split(".")
