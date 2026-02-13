@@ -11,14 +11,10 @@ require "elastic_graph/spec_support/datastore_client_shared_examples"
 
 module ElasticGraph
   module Elasticsearch
-    RSpec.describe Client do
-      # Skip on JRuby due to incompatibilities with the Elasticsearch Ruby client's
-      # transport layer and product verification. The OpenSearch client tests provide
-      # equivalent coverage on JRuby, and CRuby tests ensure full coverage.
-      # :nocov: -- JRuby-specific skip, can't be covered by MRI
-      before { skip "Elasticsearch client tests not supported on JRuby" if RUBY_ENGINE == "jruby" }
-      # :nocov:
-
+    # Skip on JRuby due to incompatibilities with the Elasticsearch Ruby client's
+    # transport layer and product verification. The OpenSearch client tests provide
+    # equivalent coverage on JRuby, and CRuby tests ensure full coverage.
+    RSpec.describe Client, skip: (RUBY_ENGINE == "jruby") do
       it_behaves_like "a datastore client" do
         def define_stubs(stub, requested_stubs)
           stub.get("/") { [200, {"X-Elastic-Product" => "Elasticsearch"}, ""] }
