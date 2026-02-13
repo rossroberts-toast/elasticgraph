@@ -103,14 +103,17 @@ SimpleCov.start do
   # status if we're not running it's test suite.
   add_filter "/elasticgraph-local/" unless spec_files_to_run.any? { |f| f.include?("/elasticgraph-local/") }
 
-  # Lambda gems require `fork` for their tests (to isolate subprocess behavior), but JRuby doesn't
-  # support `fork`. The tests get skipped on JRuby, so exclude these gems from coverage on JRuby.
+  # Some gems require `fork` for their tests or have JRuby-specific issues that prevent proper
+  # coverage tracking. Since CRuby properly tests these with full coverage, exclude them on JRuby.
   if RUBY_PLATFORM == "java"
+    # Lambda gems require `fork` for their tests (to isolate subprocess behavior)
     add_filter "/elastic_graph/admin_lambda/"
     add_filter "/elastic_graph/graphql_lambda/"
     add_filter "/elastic_graph/indexer_lambda/"
     add_filter "/elastic_graph/indexer_autoscaler_lambda/"
     add_filter "/elastic_graph/warehouse_lambda/"
+    # Elasticsearch client has JRuby-specific coverage tracking issues
+    add_filter "/elastic_graph/elasticsearch/"
   end
 
   # This version file is loaded from our gemspecs, which can get loaded by bundler before we get here.
