@@ -122,7 +122,7 @@ SimpleCov.start do
   # Also lower line coverage threshold on JRuby since it has false positives for string interpolations,
   # block contents, hash literals, etc. CRuby (3.4 + 4.0) still enforces 100% coverage.
   enable_coverage :branch unless RUBY_PLATFORM == "java"
-  minimum_coverage line: (RUBY_PLATFORM == "java" ? 95 : 100)
+  minimum_coverage line: ((RUBY_PLATFORM == "java") ? 95 : 100)
   minimum_coverage branch: 100 unless RUBY_PLATFORM == "java"
 
   merge_timeout 1800 # 30 minutes. CI jobs can take 15-20 minutes.
