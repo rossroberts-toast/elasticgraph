@@ -194,13 +194,13 @@ module ElasticGraph
     #
     # Here we hook into the call to `ElasticGraph.setup_env` in order to override its
     # `gemfile_elasticgraph_details_code_snippet`, to force it to use oru local gems.
+    # :nocov: -- JRuby's coverage doesn't track `yield` and block endings properly
     def override_gemfile_to_use_local_elasticgraph_gems
       with_env "ELASTICGRAPH_GEMS_PATH" => CommonSpecHelpers::REPO_ROOT do
-        # :nocov: -- JRuby's coverage doesn't track `yield` properly
         yield
-        # :nocov:
       end
     end
+    # :nocov:
 
     def all_committed_code_in(dir)
       ::Dir.chdir(dir) { `git ls-files -z | xargs -0 cat` }
