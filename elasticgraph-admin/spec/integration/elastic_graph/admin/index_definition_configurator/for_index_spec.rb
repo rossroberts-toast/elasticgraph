@@ -18,13 +18,11 @@ module ElasticGraph
           it "raises an exception when attempting to change a static index setting (since the datastore disallows it)" do
             configure_index_definition(schema_def)
 
-            # :nocov: -- JRuby's coverage doesn't track string interpolations properly
             expect {
               configure_index_definition(schema_def(number_of_shards: 47))
             }.to raise_error(Errors::BadDatastoreRequest, a_string_including("Can't update non dynamic settings", "index.number_of_shards"))
               .and make_datastore_write_calls("main", "PUT /#{unique_index_name}/_settings")
               .and log_warning(/Can't update non dynamic settings/)
-            # :nocov:
           end
 
           it "handles empty indexed types" do

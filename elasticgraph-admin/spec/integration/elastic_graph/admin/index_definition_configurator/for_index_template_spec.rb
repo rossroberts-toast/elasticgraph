@@ -42,7 +42,6 @@ module ElasticGraph
           end
           alias_method :put_index_template_definition_url, :put_index_definition_url
 
-          # :nocov: -- JRuby's coverage doesn't track string interpolations properly
           def make_datastore_calls_to_configure_index_def(index_name, subresource = nil)
             # When we are building against OpenSearch, one side of this conditional is not covered
             subresource = :mapping if subresource == :mappings && datastore_backend == :elasticsearch
@@ -56,7 +55,6 @@ module ElasticGraph
               "PUT #{path_for_now_index}"
             )
           end
-          # :nocov:
 
           def simulate_presence_of_extra_setting(admin, index_definition_name, name, value)
             admin.datastore_core.clients_by_name.values.each do |client|
@@ -80,7 +78,6 @@ module ElasticGraph
 
             expect {
               configure_index_definition(schema_def) do |config|
-                # :nocov: -- JRuby's coverage doesn't track string interpolations properly
                 config.with(index_definitions: {
                   "#{unique_index_name}_owners" => config_index_def_of,
                   unique_index_name => config_index_def_of(
@@ -90,7 +87,6 @@ module ElasticGraph
                     }
                   )
                 })
-                # :nocov:
               end
             }.to change { get_index_definition_configuration(unique_index_name).fetch("settings") }
               .from(a_hash_including("index.number_of_shards" => "10"))
@@ -103,7 +99,6 @@ module ElasticGraph
 
             expect {
               configure_index_definition(schema_def(number_of_shards: 5)) do |config|
-                # :nocov: -- JRuby's coverage doesn't track string interpolations properly
                 config.with(index_definitions: {
                   "#{unique_index_name}_owners" => config_index_def_of,
                   unique_index_name => config_index_def_of(setting_overrides_by_timestamp: {
@@ -112,7 +107,6 @@ module ElasticGraph
                     }
                   })
                 })
-                # :nocov:
               end
             }.to change { get_index_definition_configuration(unique_index_name)["settings"] }
               .from(nil)
@@ -149,7 +143,6 @@ module ElasticGraph
             # our schema in the tests here is more limited than the main widget schema, so select only some fields.
             let(:widget) { build(:widget).select { |k, v| k.start_with?("__") || %i[id name options created_at].include?(k) } }
 
-            # :nocov: -- JRuby's coverage doesn't track block contents properly
             let(:concrete_index_name) do
               admin_for(schema_def)
                 .datastore_core
@@ -157,7 +150,6 @@ module ElasticGraph
                 .fetch(unique_index_name)
                 .index_name_for_writes(Support::HashUtil.stringify_keys(widget))
             end
-            # :nocov:
 
             it "propagates mapping changes to the derived concrete rollover indices, ignoring the fact that the derived indices are not in the dumped schema artifacts", :in_temp_dir do
               configure_index_definition(schema_def)
@@ -171,26 +163,22 @@ module ElasticGraph
                 factory = api.factory
               end
 
-              # :nocov: -- JRuby's coverage doesn't track method calls properly
               factory.new_schema_artifact_manager(
                 schema_definition_results: schema_def_results,
                 schema_artifacts_directory: Dir.pwd,
                 enforce_json_schema_version: true,
                 output: output_io
               ).dump_artifacts
-              # :nocov:
 
               expect {
                 configure_index_definition(updated_schema, schema_artifacts_directory: Dir.pwd)
               }.to change { get_index_definition_configuration(concrete_index_name).dig("mappings", "properties").keys.sort }
                 .from([*index_meta_fields, "created_at", "id", "name", "options"])
                 .to([*index_meta_fields, "amount_cents", "created_at", "id", "name", "options"])
-                # :nocov: -- JRuby's coverage doesn't track string interpolations properly
                 .and make_datastore_write_calls("main",
                   "PUT #{put_index_template_definition_url(unique_index_name)}",
                   "PUT #{put_index_definition_url(concrete_index_name_for_now(unique_index_name), :mappings)}",
                   "PUT #{put_index_definition_url(concrete_index_name, :mappings)}")
-              # :nocov:
             end
 
             it "propagates setting changes to the derived concrete rollover indices" do
@@ -202,12 +190,10 @@ module ElasticGraph
               }.to change { get_index_definition_configuration(concrete_index_name).fetch("settings").keys }
                 .from(a_collection_excluding("index.refresh_interval"))
                 .to(a_collection_including("index.refresh_interval"))
-                # :nocov: -- JRuby's coverage doesn't track string interpolations properly
                 .and make_datastore_write_calls("main",
                   "PUT #{put_index_template_definition_url(unique_index_name)}",
                   "PUT #{put_index_definition_url(concrete_index_name_for_now(unique_index_name), :settings)}",
                   "PUT #{put_index_definition_url(concrete_index_name, :settings)}")
-              # :nocov:
             end
 
             it "fails before any changes are made if the changes can't be propagated to the concrete rollover indices" do

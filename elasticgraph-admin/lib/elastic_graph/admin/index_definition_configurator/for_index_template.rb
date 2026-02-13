@@ -83,12 +83,10 @@ module ElasticGraph
           report_action action_description
         end
 
-        # :nocov: -- JRuby's coverage doesn't track string interpolations properly
         def cannot_modify_mapping_field_type_error
           "The datastore does not support modifying the type of a field from an existing index definition. " \
           "You are attempting to update type of fields (#{mapping_type_changes.inspect}) from the #{@index_template.name} index definition."
         end
-        # :nocov:
 
         def index_template_exists?
           !current_config_parent.empty?
