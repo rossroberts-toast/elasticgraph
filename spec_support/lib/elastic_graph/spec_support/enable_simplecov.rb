@@ -106,11 +106,11 @@ SimpleCov.start do
   # Lambda gems require `fork` for their tests (to isolate subprocess behavior), but JRuby doesn't
   # support `fork`. The tests get skipped on JRuby, so exclude these gems from coverage on JRuby.
   if RUBY_PLATFORM == "java"
-    add_filter "/elasticgraph-admin_lambda/"
-    add_filter "/elasticgraph-graphql_lambda/"
-    add_filter "/elasticgraph-indexer_lambda/"
-    add_filter "/elasticgraph-indexer_autoscaler_lambda/"
-    add_filter "/elasticgraph-warehouse_lambda/"
+    add_filter "/elastic_graph/admin_lambda/"
+    add_filter "/elastic_graph/graphql_lambda/"
+    add_filter "/elastic_graph/indexer_lambda/"
+    add_filter "/elastic_graph/indexer_autoscaler_lambda/"
+    add_filter "/elastic_graph/warehouse_lambda/"
   end
 
   # This version file is loaded from our gemspecs, which can get loaded by bundler before we get here.
