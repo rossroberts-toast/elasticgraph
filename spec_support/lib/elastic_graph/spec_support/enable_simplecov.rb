@@ -135,7 +135,10 @@ SimpleCov.start do
   # hash literals, etc.) and branch coverage compatibility issues: https://github.com/jruby/jruby/issues/5147
   # We still collect coverage data on JRuby (so it contributes to merged results), but skip enforcement.
   # CRuby (3.4 + 4.0) enforces 100% coverage.
-  unless RUBY_PLATFORM == "java"
+  if RUBY_PLATFORM == "java"
+    # Explicitly set to 0 to ensure no coverage enforcement on JRuby
+    minimum_coverage line: 0
+  else
     enable_coverage :branch
     minimum_coverage line: 100
     minimum_coverage branch: 100
