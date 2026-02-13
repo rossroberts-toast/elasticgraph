@@ -17,6 +17,7 @@ module ElasticGraph
         # used by the `supports absolute paths` example.
         output = run_new("musical_artists1")
 
+        # :nocov: -- JRuby's coverage doesn't track HEREDOC interpolations properly
         expect(output.lines.first(18).join).to eq <<~EOS
           Creating a new OpenSearch ElasticGraph project called 'musical_artists1' at: #{::Dir.pwd}/musical_artists1
                 create  musical_artists1
@@ -37,6 +38,7 @@ module ElasticGraph
                 create  musical_artists1/lib/musical_artists1/shared_factories.rb
                    run  bundle install from "./musical_artists1"
         EOS
+        # :nocov:
 
         bundle_exec_rake_line = output.lines.index { |l| l =~ /bundle exec rake/ }
         expect(output.lines[bundle_exec_rake_line..(bundle_exec_rake_line + 16)].join).to eq <<~EOS
@@ -194,7 +196,9 @@ module ElasticGraph
     # `gemfile_elasticgraph_details_code_snippet`, to force it to use oru local gems.
     def override_gemfile_to_use_local_elasticgraph_gems
       with_env "ELASTICGRAPH_GEMS_PATH" => CommonSpecHelpers::REPO_ROOT do
+        # :nocov: -- JRuby's coverage doesn't track `yield` properly
         yield
+        # :nocov:
       end
     end
 

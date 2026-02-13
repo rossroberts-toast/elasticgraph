@@ -81,6 +81,7 @@ module ElasticGraph
 
       say "Successfully bootstrapped '#{app_name}' as a new #{setup_env.datastore_name} ElasticGraph project.", :green
 
+      # :nocov: -- JRuby's coverage doesn't track HEREDOC interpolations properly
       say <<~INSTRUCTIONS, :yellow
         Next steps:
           1. cd #{app_path}
@@ -88,6 +89,7 @@ module ElasticGraph
           3. Run `bundle exec rake -T` to view other available tasks.
           4. Customize your new project as needed. (Search for `TODO` to find things that need updating.)
       INSTRUCTIONS
+      # :nocov:
     end
   end
 
