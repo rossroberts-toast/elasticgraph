@@ -531,7 +531,11 @@ RSpec.configure do |config|
       client_class = (datastore_backend == :opensearch) ? ElasticGraph::OpenSearch::Client : ElasticGraph::Elasticsearch::Client
       # :nocov:
 
-      client_class.new(name, faraday_adapter: :httpx, url: datastore_url, logger: ElasticGraph::SplitLogger.new(logger, datastore_logs)) do |conn|
+      # :nocov: -- JRuby doesn't support httpx, use net_http instead
+      adapter = (RUBY_ENGINE == "jruby") ? :net_http : :httpx
+      # :nocov:
+
+      client_class.new(name, faraday_adapter: adapter, url: datastore_url, logger: ElasticGraph::SplitLogger.new(logger, datastore_logs)) do |conn|
         conn.use DisallowUnsupportedAWSOperations
         conn.use RequestTracker, datastore_requests_by_cluster_name[name]
       end
