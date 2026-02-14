@@ -488,6 +488,13 @@ RSpec.configure do |config|
   ElasticGraph::CommonSpecHelpers.datastore_backend = backend
 
   config.before(:suite) do |ex|
+    # :nocov: -- JRuby + Elasticsearch is skipped due to Faraday transport incompatibilities
+    if RUBY_ENGINE == "jruby" && backend == :elasticsearch
+      puts "Skipping cluster management on JRuby + Elasticsearch (Faraday transport incompatibility)"
+      next
+    end
+    # :nocov:
+
     datastore_state = ElasticGraph::ClusterConfigurationManager
       .new(version: version, datastore_backend: backend)
       .manage_cluster
