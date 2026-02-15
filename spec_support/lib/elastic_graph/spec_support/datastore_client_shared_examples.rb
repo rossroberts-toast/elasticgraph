@@ -203,7 +203,7 @@ module ElasticGraph
       end
 
       # :nocov: -- httpx is not available on JRuby
-      it "allows it to be set to a valid, available adapter", skip: (RUBY_ENGINE == "jruby" && "httpx not available on JRuby") do
+      it "allows it to be set to a valid, available adapter", skip: RUBY_ENGINE == "jruby" && "httpx not available on JRuby" do
         expect { build_unstubbed_client(faraday_adapter: :httpx) }.not_to raise_error
       end
       # :nocov:
