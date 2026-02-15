@@ -17,9 +17,21 @@ module ElasticGraph
       # the GraphQL name pattern as the object is built.
       module VerifiesGraphQLName
         # @private
-        def initialize(...)
-          __skip__ = super(...) # __skip__ tells Steep to ignore this
-
+        def initialize(*args, **kwargs)
+          # JRuby emits spurious warnings about Struct#initialize when using *args, **kwargs.
+          # Suppress warnings during the super call on JRuby only.
+          # :nocov: -- JRuby-specific warning suppression
+          if RUBY_ENGINE == "jruby"
+            verbose, $VERBOSE = $VERBOSE, nil
+            begin
+              __skip__ = super(*args, **kwargs)
+            ensure
+              $VERBOSE = verbose
+            end
+          else
+            # :nocov:
+            __skip__ = super(*args, **kwargs) # __skip__ tells Steep to ignore this
+          end
           VerifiesGraphQLName.verify_name!(name)
         end
 

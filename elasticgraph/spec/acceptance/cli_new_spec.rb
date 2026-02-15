@@ -176,7 +176,7 @@ module ElasticGraph
         # :nocov:
       else
         captured_io.rewind
-        captured_io.read
+        filter_bundler_warnings(captured_io.read)
       ensure
         $stdout.reopen(original_stdout)
         $stderr.reopen(original_stderr)
@@ -208,6 +208,14 @@ module ElasticGraph
           match.sub(/^[^:]+:\s*/, "")
         end
       end
+    end
+
+    # Filters out JRuby-specific Bundler warnings that pollute test output.
+    # These warnings occur when running on JRuby with certain gem configurations.
+    def filter_bundler_warnings(output)
+      output.lines.reject do |line|
+        line.include?("Source locally installed gems is ignoring")
+      end.join
     end
   end
 end

@@ -56,7 +56,7 @@ module ElasticGraph
             # We use `_ =` because while `json_schema_version_setter_location` can be nil,
             # it'll never be nil if we get here and we want the type to be non-nilable.
             setter_location = _ = schema_definition_results.json_schema_version_setter_location
-            setter_location_path = ::Pathname.new(setter_location.absolute_path.to_s).relative_path_from(::Dir.pwd)
+            setter_location_path = compute_relative_path(setter_location.absolute_path.to_s)
 
             abort "A change has been attempted to `json_schemas.yaml`, but the `json_schema_version` has not been correspondingly incremented. Please " \
               "increase the schema's version, and then run the `bundle exec rake schema_artifacts:dump` command again.\n\n" \
@@ -93,6 +93,20 @@ module ElasticGraph
       end
 
       private
+
+      # Computes a relative path from the current directory to the given absolute path.
+      # Uses realpath to resolve symlinks consistently - on macOS, /var is a symlink to
+      # /private/var, and JRuby may resolve paths differently than CRuby, causing
+      # `relative_path_from` to fail with "different prefix" when paths don't share a
+      # common base. Falls back to the absolute path if the file doesn't exist or if
+      # relative path computation fails.
+      def compute_relative_path(absolute_path)
+        resolved_path = ::File.realpath(absolute_path)
+        resolved_pwd = ::File.realpath(::Dir.pwd)
+        ::Pathname.new(resolved_path).relative_path_from(resolved_pwd)
+      rescue Errno::ENOENT, ArgumentError
+        absolute_path
+      end
 
       def artifacts
         @artifacts ||= artifacts_from_schema_def.sort_by(&:file_name).tap do

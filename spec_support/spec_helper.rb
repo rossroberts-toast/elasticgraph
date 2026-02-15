@@ -221,6 +221,10 @@ RSpec.configure do |config|
     Dir.mktmpdir { |tmp_dir| Dir.chdir(tmp_dir, &ex) }
   end
 
+  # Skip tests tagged with `:unless_jruby` when running on JRuby.
+  # This is useful for tests that verify behavior that is intentionally different on JRuby.
+  config.filter_run_excluding unless_jruby: true if RUBY_ENGINE == "jruby"
+
   # Here we define support for `:no_vcr` which can be used to tag groups or examples where we don't
   # want VCR to be used for some reason. `no_vcr: false` is added by default as metadata to every
   # example (so that we can filter on `:vcr, no_vcr: false` in `spec_support/vcr.rb`), but when

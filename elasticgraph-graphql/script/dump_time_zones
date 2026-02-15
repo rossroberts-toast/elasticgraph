@@ -43,7 +43,8 @@ java_time_zones = `java --source 11 #{__dir__}/dump_time_zones.java`.split("\n")
 EOS
 
 verify_code_command = %(ruby -r#{updated_code_filename} -e "puts ElasticGraph::GraphQL::ScalarCoercionAdapters::VALID_TIME_ZONES.size")
-verify_code_output = `#{verify_code_command} 2>&1`
+# Redirect stderr to /dev/null to avoid Bundler warnings (e.g., on JRuby) from polluting the output
+verify_code_output = `#{verify_code_command} 2>/dev/null`
 
 if verify_code_output.to_i < 600 # As of Nov 2022 there are 601 time zones.
   abort <<~EOS.strip

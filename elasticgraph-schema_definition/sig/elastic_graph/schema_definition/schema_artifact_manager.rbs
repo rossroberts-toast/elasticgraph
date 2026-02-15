@@ -49,6 +49,7 @@ module ElasticGraph
 
       def new_versioned_json_schema_artifact: (::Hash[::String, untyped]) -> SchemaArtifact[::Hash[::String, untyped]]
       def new_raw_artifact: (::String, ::String) -> SchemaArtifact[::String]
+      def compute_relative_path: (::String) -> (::Pathname | ::String)
       def check_if_needs_json_schema_version_bump: () { (::Integer) -> void } -> void
       def pruned_runtime_metadata: (::String) -> SchemaArtifacts::RuntimeMetadata::Schema
     end

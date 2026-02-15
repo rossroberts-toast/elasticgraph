@@ -17,46 +17,52 @@ module ElasticGraph
       # @private
       class SchemaElementNamesDefinition
         def self.new(*element_names)
-          ::Data.define(:form, :overrides, :exposed_name_by_canonical_name, :canonical_name_by_exposed_name) do
-            const_set(:ELEMENT_NAMES, element_names)
+          data_class = ::Data.define(:form, :overrides, :exposed_name_by_canonical_name, :canonical_name_by_exposed_name)
 
-            define_method :initialize do |form:, overrides: {}|
-              extend(CONVERTERS.fetch(form.to_s) do
-                raise Errors::SchemaError,
-                  "Invalid schema element name form: #{form.inspect}. " \
-                  "Only valid values are: #{CONVERTERS.keys.inspect}."
-              end)
+          # Store the original new method before we override it
+          original_new = data_class.method(:new)
 
-              unused_keys = overrides.keys.map(&:to_s) - element_names.map(&:to_s)
-              if unused_keys.any?
-                raise Errors::SchemaError,
-                  "`overrides` contains entries that do not match any schema " \
-                  "elements: #{unused_keys.to_a.inspect}. Are any misspelled?"
-              end
-
-              exposed_name_by_canonical_name = element_names.each_with_object({}) do |element, names|
-                names[element] = overrides.fetch(element) do
-                  overrides.fetch(element.to_s) do
-                    normalize_case(element.to_s)
-                  end
-                end.to_s
-              end.freeze
-
-              canonical_name_by_exposed_name = exposed_name_by_canonical_name.invert
-              validate_no_name_collisions(canonical_name_by_exposed_name, exposed_name_by_canonical_name)
-
-              super(
-                form: form,
-                overrides: overrides,
-                exposed_name_by_canonical_name: exposed_name_by_canonical_name,
-                canonical_name_by_exposed_name: canonical_name_by_exposed_name
-              )
+          data_class.define_singleton_method(:new) do |form:, overrides: {}|
+            converter = CONVERTERS.fetch(form.to_s) do
+              raise Errors::SchemaError,
+                "Invalid schema element name form: #{form.inspect}. " \
+                "Only valid values are: #{CONVERTERS.keys.inspect}."
             end
+
+            unused_keys = overrides.keys.map(&:to_s) - element_names.map(&:to_s)
+            if unused_keys.any?
+              raise Errors::SchemaError,
+                "`overrides` contains entries that do not match any schema " \
+                "elements: #{unused_keys.to_a.inspect}. Are any misspelled?"
+            end
+
+            exposed_name_by_canonical_name = element_names.each_with_object({}) do |element, names|
+              names[element] = overrides.fetch(element) do
+                overrides.fetch(element.to_s) do
+                  converter.normalize_case(element.to_s)
+                end
+              end.to_s
+            end.freeze
+
+            canonical_name_by_exposed_name = exposed_name_by_canonical_name.invert
+            SchemaElementNamesDefinition.validate_no_name_collisions(canonical_name_by_exposed_name, exposed_name_by_canonical_name)
+
+            # Call original new with positional args for JRuby compatibility
+            original_new.call(form, overrides, exposed_name_by_canonical_name, canonical_name_by_exposed_name)
+          end
+
+          data_class.class_eval do
+            const_set(:ELEMENT_NAMES, element_names)
 
             # standard:disable Lint/NestedMethodDefinition
             element_names.each do |element|
               method_name = SnakeCaseConverter.normalize_case(element.to_s)
               define_method(method_name) { exposed_name_by_canonical_name.fetch(element) }
+            end
+
+            # Normalizes the case of a name based on the configured form (snake_case or camelCase)
+            def normalize_case(name)
+              CONVERTERS.fetch(form.to_s).normalize_case(name)
             end
 
             # Returns the _canonical_ name for the given _exposed name_. The canonical name
@@ -86,24 +92,24 @@ module ElasticGraph
               "#<#{self.class.name} form=#{form}, overrides=#{overrides}>"
             end
             alias_method :inspect, :to_s
-
-            private
-
-            def validate_no_name_collisions(canonical_name_by_exposed_name, exposed_name_by_canonical_name)
-              return if canonical_name_by_exposed_name.size == exposed_name_by_canonical_name.size
-
-              collisions = exposed_name_by_canonical_name
-                .group_by { |k, v| v }
-                .reject { |v, kv_pairs| kv_pairs.size == 1 }
-                .transform_values { |kv_pairs| kv_pairs.map(&:first) }
-                .map do |duplicate_exposed_name, canonical_names|
-                  "#{canonical_names.inspect} all map to the same exposed name: #{duplicate_exposed_name}"
-                end.join(" and ")
-
-              raise Errors::SchemaError, collisions
-            end
             # standard:enable Lint/NestedMethodDefinition
           end
+
+          data_class
+        end
+
+        def self.validate_no_name_collisions(canonical_name_by_exposed_name, exposed_name_by_canonical_name)
+          return if canonical_name_by_exposed_name.size == exposed_name_by_canonical_name.size
+
+          collisions = exposed_name_by_canonical_name
+            .group_by { |k, v| v }
+            .reject { |v, kv_pairs| kv_pairs.size == 1 }
+            .transform_values { |kv_pairs| kv_pairs.map(&:first) }
+            .map do |duplicate_exposed_name, canonical_names|
+              "#{canonical_names.inspect} all map to the same exposed name: #{duplicate_exposed_name}"
+            end.join(" and ")
+
+          raise Errors::SchemaError, collisions
         end
 
         FORM = "form"

@@ -51,6 +51,12 @@ target :elasticgraph_gems do
     elasticgraph-local/lib/elastic_graph/local/spec_support/common_project_specs.rb
   ])
 
+  # elasticgraph-support: files with JRuby-specific code that can't be type checked.
+  ignore(*%w[
+    elasticgraph-support/lib/elastic_graph/support/config.rb
+    elasticgraph-support/lib/elastic_graph/support/jruby_data_compat.rb
+  ])
+
   # elasticgraph-schema_artifacts: existing files that don't type check yet.
   ignore(*%w[
     elasticgraph-schema_artifacts/lib/elastic_graph/schema_artifacts/runtime_metadata/schema_element_names.rb
