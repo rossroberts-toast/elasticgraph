@@ -16,7 +16,7 @@ module ElasticGraph
       end
 
       describe ".load" do
-        it "prints a yellow warning to stderr when graphql-c_parser is unavailable" do
+        it "prints a yellow warning to stderr when graphql-c_parser is unavailable", skip: RUBY_ENGINE == "jruby" && "JRuby intentionally skips the warning" do
           simulate_missing_gems "graphql/c_parser"
 
           expect {
@@ -24,7 +24,7 @@ module ElasticGraph
           }.to output(/\[ElasticGraph\] For better performance, add `graphql-c_parser` to your Gemfile/).to_stderr
         end
 
-        it "prints the warning only once across multiple calls" do
+        it "prints the warning only once across multiple calls", skip: RUBY_ENGINE == "jruby" && "JRuby intentionally skips the warning" do
           simulate_missing_gems "graphql/c_parser"
 
           stderr_output = StringIO.new

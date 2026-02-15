@@ -8,6 +8,10 @@
 
 require "securerandom"
 
+# Load JRuby compatibility polyfill for Data.define globally before any code uses it.
+# This must be loaded early since Data.define is used in 136+ files across the codebase.
+require "elastic_graph/support/jruby_data_compat" if RUBY_ENGINE == "jruby"
+
 # Root namespace for all ElasticGraph code.
 module ElasticGraph
   # Here we enumerate constants that are used from multiple places in the code.

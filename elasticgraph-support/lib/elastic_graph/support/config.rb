@@ -7,7 +7,6 @@
 # frozen_string_literal: true
 
 require "elastic_graph/errors"
-require "elastic_graph/support/jruby_data_compat"
 require "elastic_graph/support/json_schema/validator_factory"
 require "elastic_graph/support/from_yaml_file"
 require "elastic_graph/support/hash_util"

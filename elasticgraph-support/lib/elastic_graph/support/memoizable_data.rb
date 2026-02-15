@@ -8,7 +8,6 @@
 
 require "delegate"
 require "stringio"
-require "elastic_graph/support/jruby_data_compat"
 
 module ElasticGraph
   module Support
