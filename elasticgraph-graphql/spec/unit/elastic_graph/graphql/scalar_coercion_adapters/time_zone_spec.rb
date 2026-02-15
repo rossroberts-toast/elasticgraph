@@ -88,7 +88,7 @@ module ElasticGraph
         end
 
         describe "VALID_TIME_ZONES" do
-          it "is up-to-date with the list of time zones available on the JVM (since that's the list that Elasticsearch/OpenSearch use)" do
+          it "is up-to-date with the list of time zones available on the JVM (since that's the list that Elasticsearch/OpenSearch use)", skip: RUBY_ENGINE == "jruby" && "JRuby has issues running the java command in isolated gem context" do
             expected_time_zones_file = `#{SPEC_ROOT}/../script/dump_time_zones --print`.lines.reject do |line|
               # "America/Coyhaique" is a new TimeZone added to the 2025b tzdata database^[1]. In July 2025, the JDKs on the standard
               # GitHub actions workers was updated to this new database and this test started failing (because `valid_time_zones.rb`

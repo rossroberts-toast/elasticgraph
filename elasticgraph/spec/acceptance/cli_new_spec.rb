@@ -176,7 +176,7 @@ module ElasticGraph
         # :nocov:
       else
         captured_io.rewind
-        captured_io.read
+        filter_jruby_noise(captured_io.read)
       ensure
         $stdout.reopen(original_stdout)
         $stderr.reopen(original_stderr)
@@ -208,6 +208,14 @@ module ElasticGraph
           match.sub(/^[^:]+:\s*/, "")
         end
       end
+    end
+
+    # JRuby outputs extra warning lines that aren't relevant to our tests.
+    # Filter them out to make output comparisons work across Ruby implementations.
+    def filter_jruby_noise(output)
+      output.lines.reject { |line|
+        line.include?("Source locally installed gems is ignoring")
+      }.join
     end
   end
 end

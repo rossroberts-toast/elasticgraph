@@ -7,7 +7,6 @@
 # frozen_string_literal: true
 
 require "elastic_graph/errors"
-require "elastic_graph/support/jruby_data_compat"
 require "elastic_graph/support/json_schema/validator_factory"
 require "elastic_graph/support/from_yaml_file"
 require "elastic_graph/support/hash_util"
@@ -166,9 +165,11 @@ module ElasticGraph
           converted = convert_values(**config)
           # JRuby has a bug where Data#to_h returns values in the order kwargs were passed,
           # not in member order. Reorder to match member order to work around this.
+          # :nocov: -- JRuby-specific workaround, branch not taken on MRI
           if RUBY_ENGINE == "jruby"
             converted = klass.members.to_h { |m| [m, converted.fetch(m)] }
           end
+          # :nocov:
           __skip__ = super(**converted)
         end
 

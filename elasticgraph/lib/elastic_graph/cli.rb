@@ -48,9 +48,6 @@ module ElasticGraph
       gemfile_elasticgraph_details_code_snippet = %(["#{VERSION}"])
       if (eg_gems_path = ENV["ELASTICGRAPH_GEMS_PATH"])
         gemfile_elasticgraph_details_code_snippet = %([path: "#{eg_gems_path}"])
-        # :nocov: -- our tests always override `gemfile_elasticgraph_details_code_snippet` using the ENV var.
-      else
-        # :nocov:
       end
 
       setup_env = SetupEnv.new(
@@ -70,13 +67,17 @@ module ElasticGraph
 
       inside new_app_path do
         ::Bundler.with_unbundled_env do
-          run "bundle install"
-          run "bundle exec rake schema_artifacts:dump query_registry:dump_variables:all build"
+          # JRuby needs explicit BUNDLE_GEMFILE unset when running nested bundle commands
+          # :nocov: -- JRuby-specific code path not covered on CRuby
+          ENV.delete("BUNDLE_GEMFILE") if RUBY_ENGINE == "jruby"
+          # :nocov:
+          run "bundle install", abort_on_failure: true
+          run "bundle exec rake schema_artifacts:dump query_registry:dump_variables:all build", abort_on_failure: true
         end
 
-        run "git init"
-        run "git add ."
-        run "git commit -m 'Bootstrapped ElasticGraph with `elasticgraph new`.'"
+        run "git init", abort_on_failure: true
+        run "git add .", abort_on_failure: true
+        run "git commit -m 'Bootstrapped ElasticGraph with `elasticgraph new`.'", abort_on_failure: true
       end
 
       say "Successfully bootstrapped '#{app_name}' as a new #{setup_env.datastore_name} ElasticGraph project.", :green

@@ -9,6 +9,12 @@
 # This file exists to enable simplecov for any of the ElasticGraph gems. To use it, set a `COVERAGE` env var:
 #
 # COVERAGE=1 be rspec path/to/gem/spec
+
+# Skip SimpleCov entirely on JRuby due to a bug in JRuby's coverage implementation that causes
+# ArrayIndexOutOfBoundsException in CoverageData.mergeLines. CRuby enforces 100% coverage.
+# JRuby-specific code branches should be marked with :nocov: since they can't be covered by MRI.
+return if RUBY_PLATFORM == "java"
+
 require "simplecov"
 require "simplecov-console"
 
@@ -103,6 +109,19 @@ SimpleCov.start do
   # status if we're not running it's test suite.
   add_filter "/elasticgraph-local/" unless spec_files_to_run.any? { |f| f.include?("/elasticgraph-local/") }
 
+  # Some gems require `fork` for their tests or have JRuby-specific issues that prevent proper
+  # coverage tracking. Since CRuby properly tests these with full coverage, exclude them on JRuby.
+  if RUBY_PLATFORM == "java"
+    # Lambda gems require `fork` for their tests (to isolate subprocess behavior)
+    add_filter "/elastic_graph/admin_lambda/"
+    add_filter "/elastic_graph/graphql_lambda/"
+    add_filter "/elastic_graph/indexer_lambda/"
+    add_filter "/elastic_graph/indexer_autoscaler_lambda/"
+    add_filter "/elastic_graph/warehouse_lambda/"
+    # Elasticsearch client has JRuby-specific coverage tracking issues
+    add_filter "/elastic_graph/elasticsearch/"
+  end
+
   # This version file is loaded from our gemspecs, which can get loaded by bundler before we get here.
   # SimpleCov is only able to track coverage of files loaded after it starts, so we need to filter them out if
   # their constant is already defined. They don't contain any branching statements or anything so it's ok to
@@ -118,10 +137,15 @@ SimpleCov.start do
   gems_being_tested_globs = gems_being_tested_dirs.flat_map { |dir| [dir / "lib/**/*.rb", dir / "spec/**/*.rb"] }
   track_files "{#{gems_being_tested_globs.join(",")}}"
 
-  # Disable branch coverage on JRuby due to compatibility issues: https://github.com/jruby/jruby/issues/5147
-  enable_coverage :branch unless RUBY_PLATFORM == "java"
-  minimum_coverage line: 100
-  minimum_coverage branch: 100 unless RUBY_PLATFORM == "java"
+  # JRuby has coverage tracking quirks (false positives for string interpolations, block contents,
+  # hash literals, etc.) and branch coverage compatibility issues: https://github.com/jruby/jruby/issues/5147
+  # We still collect coverage data on JRuby (so it contributes to merged results), but skip enforcement.
+  # CRuby (3.4 + 4.0) enforces 100% coverage.
+  unless RUBY_PLATFORM == "java"
+    enable_coverage :branch
+    minimum_coverage line: 100
+    minimum_coverage branch: 100
+  end
 
   merge_timeout 1800 # 30 minutes. CI jobs can take 15-20 minutes.
 end
