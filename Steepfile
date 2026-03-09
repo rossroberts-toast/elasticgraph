@@ -66,11 +66,6 @@ target :elasticgraph_gems do
     elasticgraph-schema_definition/lib/elastic_graph/schema_definition/schema_elements/union_type.rb
   ])
 
-  # We don't bother type checking JRuby patches.
-  ignore(*%w[
-    **/lib/elastic_graph/*/jruby_patches.rb
-  ])
-
   library "logger",
     "base64",
     "date",

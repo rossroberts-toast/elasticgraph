@@ -8,6 +8,12 @@
 
 require "securerandom"
 
+# :nocov: -- only loaded on JRuby
+if RUBY_ENGINE == "jruby" && ::Gem::Version.new(JRUBY_VERSION) < ::Gem::Version.new("10.0.4.0")
+  raise "ElasticGraph requires JRuby >= 10.0.4.0, but you are running #{JRUBY_VERSION}."
+end
+# :nocov:
+
 # Root namespace for all ElasticGraph code.
 module ElasticGraph
   # Here we enumerate constants that are used from multiple places in the code.
