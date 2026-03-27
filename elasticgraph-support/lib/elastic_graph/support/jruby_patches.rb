@@ -9,7 +9,7 @@
 # Central location for JRuby workarounds.
 # Each patch should reference the upstream fix and specify when it can be removed.
 
-if ::Gem::Version.new(JRUBY_VERSION) < ::Gem::Version.new("10.0.4.0")
+if ::Gem::Version.new(JRUBY_VERSION) < ::Gem::Version.new("10.0.5.0")
   module ElasticGraph
     module Support
       # @private
