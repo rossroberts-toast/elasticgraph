@@ -30,7 +30,11 @@ module ElasticGraph
         extend Forwardable
 
         # @dynamic type_namer
-        def_delegator :schema_def_state, :type_namer
+        # NOTE (temporary for Bug #2 investigation): replaced def_delegator with explicit
+        # method to work around JRuby 10.1 Forwardable+DelegateClass+kwargs bug.
+        def type_namer
+          schema_def_state.type_namer
+        end
 
         # Extracts the type without any non-null or list wrappings it has.
         def fully_unwrapped

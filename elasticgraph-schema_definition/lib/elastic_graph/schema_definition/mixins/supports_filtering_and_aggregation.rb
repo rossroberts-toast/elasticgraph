@@ -89,7 +89,8 @@ module ElasticGraph
           schema_def_state.factory.build_standard_filter_input_types_for_index_object_type(name) do |t|
             graphql_fields_by_name.values.each do |field|
               if field.filterable?
-                t.graphql_fields_by_name[field.name] = field.to_filter_field(parent_type: t)
+                filter_field = field.to_filter_field(parent_type: t)
+                t.graphql_fields_by_name[field.name] = filter_field
               end
             end
           end
