@@ -11,7 +11,6 @@ require "elastic_graph/schema_artifacts/runtime_metadata/schema_element_names"
 require "elastic_graph/schema_definition/mixins/verifies_graphql_name"
 require "elastic_graph/schema_definition/schema_elements/type_namer"
 require "elastic_graph/support/memoizable_data"
-require "forwardable"
 
 module ElasticGraph
   module SchemaDefinition
@@ -27,10 +26,12 @@ module ElasticGraph
       #
       # @private
       class TypeReference < Support::MemoizableData.define(:name, :schema_def_state)
-        extend Forwardable
-
-        # @dynamic type_namer
-        def_delegator :schema_def_state, :type_namer
+        # Defined as an explicit method (rather than `Forwardable#def_delegator`) to work around a
+        # JRuby 10.1 bug where `def_delegator` on a `DelegateClass(Data.define(...))` drops the
+        # kwargs flag when the delegator's return value receives a kwargs call.
+        def type_namer
+          schema_def_state.type_namer
+        end
 
         # Extracts the type without any non-null or list wrappings it has.
         def fully_unwrapped

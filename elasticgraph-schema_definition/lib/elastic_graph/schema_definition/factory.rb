@@ -411,12 +411,10 @@ module ElasticGraph
 
           source_type.graphql_fields_by_name.each do |field_name, field|
             next unless field.filterable?
-            t.graphql_fields_by_name[field_name] = field.to_filter_field(
-              parent_type: t,
-              # We are never filtering on single values in this context (since we are already
-              # within a list that isn't using the `nested` mapping type).
-              for_single_value: false
-            )
+            # We are never filtering on single values in this context (since we are already
+            # within a list that isn't using the `nested` mapping type).
+            filter_field = field.to_filter_field(parent_type: t, for_single_value: false)
+            t.graphql_fields_by_name[field_name] = filter_field
           end
 
           # We want to add a `count` field so that clients can filter on the count of elements of this list field.
