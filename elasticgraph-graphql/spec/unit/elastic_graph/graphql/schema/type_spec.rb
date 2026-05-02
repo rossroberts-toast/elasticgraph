@@ -604,14 +604,14 @@ module ElasticGraph
             end
           end
 
-          it "returns [] for object types" do
+          it "returns an empty set for object types" do
             type = schema.type_named("Size")
-            expect(type.subtypes).to eq []
+            expect(type.subtypes).to be_empty
           end
 
-          it "returns [] for scalar types" do
+          it "returns an empty set for scalar types" do
             type = schema.type_named("Int")
-            expect(type.subtypes).to eq []
+            expect(type.subtypes).to be_empty
           end
 
           it "returns the subtypes of a union" do
@@ -755,6 +755,104 @@ module ElasticGraph
             end
 
             schema.type_named(type_name).search_index_definitions
+          end
+        end
+
+        describe "#source_type" do
+          attr_reader :schema
+
+          before(:context) do
+            @schema = define_schema(clients_by_name: {}) do |s|
+              s.enum_type "Status" do |t|
+                t.value "ACTIVE"
+                t.value "INACTIVE"
+              end
+
+              s.object_type "Thing" do |t|
+                t.field "id", "ID!"
+                t.field "status", "Status"
+                t.index "things"
+              end
+            end
+          end
+
+          it "returns the underlying document type for an indexed aggregation type" do
+            expect(schema.type_named("ThingAggregation").source_type).to be schema.type_named("Thing")
+          end
+
+          it "returns nil for a non-derived object type" do
+            expect(schema.type_named("Thing").source_type).to be_nil
+          end
+
+          it "returns nil for a scalar type" do
+            expect(schema.type_named("Int").source_type).to be_nil
+          end
+
+          it "returns nil for an enum type" do
+            expect(schema.type_named("Status").source_type).to be_nil
+          end
+        end
+
+        describe "#concrete_non_subtypes_in_shared_index" do
+          attr_reader :schema
+
+          before(:context) do
+            @schema = define_schema(clients_by_name: {}) do |s|
+              # A root interface with an index shared by all sub-hierarchies.
+              s.interface_type "Channel" do |t|
+                t.field "id", "ID!"
+                t.index "channels"
+              end
+
+              # Sibling types — NOT under Store, but share the Channel index.
+              s.object_type "Wholesaler" do |t|
+                t.implements "Channel"
+                t.field "id", "ID!"
+              end
+
+              s.object_type "Distributor" do |t|
+                t.implements "Channel"
+                t.field "id", "ID!"
+              end
+
+              # A sub-interface and its concrete subtypes.
+              s.interface_type "Store" do |t|
+                t.implements "Channel"
+                t.field "id", "ID!"
+              end
+
+              s.object_type "OnlineStore" do |t|
+                t.implements "Store"
+                t.field "id", "ID!"
+              end
+
+              # PhysicalStore overrides to use a dedicated index.
+              s.object_type "PhysicalStore" do |t|
+                t.implements "Store"
+                t.field "id", "ID!"
+                t.index "physical_stores"
+              end
+            end
+          end
+
+          it "excludes the type itself and its subtypes, returning only concrete sibling types in the shared index" do
+            expect(schema.type_named("Store").concrete_non_subtypes_in_shared_index).to contain_exactly(
+              schema.type_named("Wholesaler"),
+              schema.type_named("Distributor")
+            )
+          end
+
+          it "excludes the type itself even when the type is a concrete type in a shared index" do
+            # Wholesaler is a concrete type stored in the "channels" index, so it appears in
+            # document_types_stored_in("channels"). Without the `t == self` guard it would include itself.
+            expect(schema.type_named("Wholesaler").concrete_non_subtypes_in_shared_index).to contain_exactly(
+              schema.type_named("Distributor"),
+              schema.type_named("OnlineStore")
+            )
+          end
+
+          it "returns an empty set when all types sharing its indexes are subtypes" do
+            expect(schema.type_named("Channel").concrete_non_subtypes_in_shared_index).to be_empty
           end
         end
 

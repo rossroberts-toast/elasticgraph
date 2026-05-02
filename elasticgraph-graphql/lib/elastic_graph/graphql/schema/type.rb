@@ -61,12 +61,12 @@ module ElasticGraph
         # List of index definitions that should be searched for this type.
         def search_index_definitions
           @search_index_definitions ||=
-            if indexed_aggregation?
-              # For an indexed aggregation, we just delegate to its source type. This works better than
-              # dumping index definitions in the runtime metadata of the indexed aggregation type itself
-              # because of abstract (interface/union) types. The source document type handles that (since
-              # there is a supertype/subtype relationship on the document types) but that relationship
-              # does not exist on the indexed aggregation.
+            if (st = source_type)
+              # When a type has a source type (a prime example being indexed aggregations), we delegate
+              # to the source type. This works better than dumping index definitions in the runtime metadata
+              # of the derived type itself because of abstract (interface/union) types. The source document
+              # type handles that (since there is a supertype/subtype relationship on the document types)
+              # but that relationship does not exist on derived types.
               #
               # For example, assume we have these indexed document types:
               # - type Person {}
@@ -76,7 +76,7 @@ module ElasticGraph
               # We can go from `Inventor` to its subtypes to find the search indexes. However, `InventorAggregation`
               # is NOT a union of `PersonAggregation` and `CompanyAggregation`, so we can't do the same thing on the
               # indexed aggregation types. Delegating to the source type solves this case.
-              @schema.type_named(@object_runtime_metadata.source_type).search_index_definitions
+              st.search_index_definitions
             else
               @index_definitions.union(subtypes.flat_map(&:search_index_definitions))
             end
@@ -117,13 +117,37 @@ module ElasticGraph
           end
         end
 
-        # Returns the subtypes of this type, if it has any. This is like `#possible_types` provided by the
+        # Returns all concrete subtypes, at any depth. This is like `#possible_types` provided by the
         # GraphQL gem, but that includes a type itself when you ask for the possible types of a non-abstract type.
         def subtypes
           @subtypes ||= @schema
             .graphql_schema
             .possible_types(graphql_type, visibility_profile: :boot)
-            .map { |t| @schema.type_from(t) } - [self]
+            .map { |t| @schema.type_from(t) }
+            .reject { |t| t == self }
+            .to_set
+        end
+
+        # For derived types (e.g. indexed aggregations), returns the underlying source document type.
+        # Returns `nil` for non-derived types.
+        def source_type
+          return @source_type if defined?(@source_type)
+          @source_type = @object_runtime_metadata&.source_type&.then { |st| @schema.type_named(st) }
+        end
+
+        # Returns the set of concrete (non-abstract) indexed document types that share any of this
+        # type's search indexes but are not subtypes of this type. Used to determine whether a
+        # `__typename` filter is needed when querying an abstract type.
+        #
+        # Abstract types are excluded because documents in the datastore are always associated
+        # with a concrete `__typename`. When filtering by `__typename`, only concrete types are
+        # relevant.
+        def concrete_non_subtypes_in_shared_index
+          @concrete_non_subtypes_in_shared_index ||=
+            search_index_definitions
+              .flat_map { |index_def| @schema.document_types_stored_in(index_def.name).to_a }
+              .reject { |t| t == self || subtypes.include?(t) || t.abstract? }
+              .to_set
         end
 
         def field_named(field_name)
