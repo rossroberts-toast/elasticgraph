@@ -21,7 +21,7 @@ module ElasticGraph
         end
 
         it "returns whatever object is passed as `:value`" do
-          sentinel = Object.new
+          sentinel = ::Object.new
           resolver = ConstantValue.new(elasticgraph_graphql: nil, config: {value: sentinel})
 
           expect(resolver.resolve(field: :f, object: :o, args: :a, context: :c)).to be(sentinel)
