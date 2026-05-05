@@ -132,6 +132,93 @@ module ElasticGraph
           expect(regular.graphql_fields_by_name.fetch("domain").resolver).to be_nil
         end
       end
+
+      context "namespace type graph validation" do
+        it "raises when a namespace type is declared but not reachable from `Query`" do
+          results = define_schema(schema_element_name_form: "snake_case") do |schema|
+            schema.namespace_type "OlapQuery"
+          end
+
+          expect { results.graphql_schema_string }.to raise_error(
+            Errors::SchemaError, /Namespace type\(s\) declared but not reachable from `Query`: `OlapQuery`/
+          )
+        end
+
+        it "lists all unreachable namespace types in alphabetical order" do
+          results = define_schema(schema_element_name_form: "snake_case") do |schema|
+            schema.namespace_type "WarehouseQuery"
+            schema.namespace_type "OlapQuery"
+          end
+
+          expect { results.graphql_schema_string }.to raise_error(Errors::SchemaError, /`OlapQuery`, `WarehouseQuery`/)
+        end
+
+        it "passes when a namespace type is reachable transitively from `Query`, including via multiple paths" do
+          results = define_schema(schema_element_name_form: "snake_case") do |schema|
+            schema.namespace_type "OlapQuery" do |t|
+              t.field "domain", "DomainQuery"
+            end
+            schema.namespace_type "WarehouseQuery" do |t|
+              t.field "domain", "DomainQuery"
+            end
+            schema.namespace_type "DomainQuery"
+
+            schema.on_root_query_type do |t|
+              t.field "olap", "OlapQuery!" do |f|
+                f.resolve_with :constant_value, value: {}
+              end
+              t.field "warehouse", "WarehouseQuery!" do |f|
+                f.resolve_with :constant_value, value: {}
+              end
+            end
+          end
+
+          expect { results.graphql_schema_string }.not_to raise_error
+        end
+
+        it "raises when namespace types form a cycle" do
+          results = define_schema(schema_element_name_form: "snake_case") do |schema|
+            schema.namespace_type "OlapQuery" do |t|
+              t.field "domain", "DomainQuery"
+            end
+            schema.namespace_type "DomainQuery" do |t|
+              t.field "olap", "OlapQuery"
+            end
+          end
+
+          expect { results.graphql_schema_string }.to raise_error(
+            Errors::SchemaError, /Cycle detected among namespace types: `OlapQuery` -> `DomainQuery` -> `OlapQuery`/
+          )
+        end
+
+        it "raises when a namespace type references itself" do
+          results = define_schema(schema_element_name_form: "snake_case") do |schema|
+            schema.namespace_type "OlapQuery" do |t|
+              t.field "self", "OlapQuery"
+            end
+          end
+
+          expect { results.graphql_schema_string }.to raise_error(
+            Errors::SchemaError, /Cycle detected among namespace types: `OlapQuery` -> `OlapQuery`/
+          )
+        end
+
+        it "raises the existing `needs a resolver` error when a namespace type field has no resolver" do
+          results = define_schema(schema_element_name_form: "snake_case") do |schema|
+            schema.namespace_type "OlapQuery" do |t|
+              t.field "name", "String"
+            end
+
+            schema.on_root_query_type do |t|
+              t.field "olap", "OlapQuery!" do |f|
+                f.resolve_with :constant_value, value: {}
+              end
+            end
+          end
+
+          expect { results.runtime_metadata }.to raise_error(Errors::SchemaError, /`OlapQuery.name` needs a resolver/)
+        end
+      end
     end
   end
 end
