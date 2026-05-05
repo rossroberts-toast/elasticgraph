@@ -135,6 +135,53 @@ module ElasticGraph
         nil
       end
 
+      # Defines a GraphQL object type that serves as a _namespace_ for grouping root query fields.
+      #
+      # Instead of adding an indexed type's root query fields directly to `Query` (e.g. `Query.widgets`),
+      # a namespace type lets you group them under a nested path (e.g. `Query.olap.widgets`). This is
+      # particularly useful when composing ElasticGraph into a federated supergraph, where grouping
+      # related fields under a namespace keeps them discoverable among fields from other subgraphs.
+      #
+      # A namespace type is an ordinary GraphQL object type with two differences:
+      #
+      # - It must not be indexed (calling `index` on it raises an error).
+      # - Fields on a namespace type whose return type is another namespace type are auto-wired
+      #   to the built-in `:constant_value` resolver (with an empty hash as the value), so you
+      #   don't have to assign a resolver for intermediate namespace fields.
+      #
+      # Use the `on:` parameter of {Mixins::HasIndices#root_query_fields} to route an indexed type's
+      # root query fields to a namespace type.
+      #
+      # @param name [String] name of the namespace type
+      # @yield [SchemaElements::ObjectType] namespace type object, for further customization
+      # @return [void]
+      #
+      # @example Define an `OlapQuery` namespace and route `Widget` to it
+      #   ElasticGraph.define_schema do |schema|
+      #     schema.namespace_type "OlapQuery" do |t|
+      #       t.documentation "Namespace for OLAP query fields."
+      #     end
+      #
+      #     schema.on_root_query_type do |t|
+      #       t.field "olap", "OlapQuery"
+      #     end
+      #
+      #     schema.object_type "Widget" do |t|
+      #       t.root_query_fields plural: "widgets", singular: "widget", on: "OlapQuery"
+      #       t.field "id", "ID"
+      #       t.index "widgets"
+      #     end
+      #   end
+      def namespace_type(name, &block)
+        type = @factory.new_object_type(name.to_s) do |t|
+          t.__mark_as_namespace_type!
+          t.resolve_fields_with nil
+          block&.call(t)
+        end
+        @state.register_object_interface_or_union_type type
+        nil
+      end
+
       # Defines a [GraphQL interface](https://graphql.org/learn/schema/#interface-types). Use it to define an abstract supertype with
       # one or more fields that concrete implementations of the interface must also define. Each implementation can be an
       # {SchemaElements::ObjectType} or {SchemaElements::InterfaceType}.

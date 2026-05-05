@@ -48,6 +48,20 @@ module ElasticGraph
           super.merge("__typename" => schema_def_state.factory.new_field(name: "__typename", type: "String", parent_type: self))
         end
 
+        # @return [Boolean] true if this type was declared via {API#namespace_type} and groups root query fields.
+        def namespace?
+          @namespace == true
+        end
+
+        # @private
+        def __mark_as_namespace_type!
+          if has_own_index_def?
+            raise Errors::SchemaError, "`#{name}` cannot be both an indexed type and a namespace type."
+          end
+          @namespace = true
+          schema_def_state.after_user_definition_complete { auto_wire_namespace_subfields }
+        end
+
         # @private
         def initialize(schema_def_state, name)
           field_factory = schema_def_state.factory.method(:new_field)
@@ -55,6 +69,24 @@ module ElasticGraph
             __skip__ = super(type) do
               yield self
             end
+          end
+        end
+
+        private
+
+        # Auto-assigns `:constant_value` to fields on this namespace type whose return type is itself a namespace
+        # type, as long as the field has no arguments and no explicitly assigned resolver. This spares the schema
+        # author from wiring a trivial resolver on every intermediate namespace field.
+        def auto_wire_namespace_subfields
+          graphql_fields_by_name.each_value do |field|
+            next unless field.args.empty?
+            next unless field.resolver.nil?
+
+            return_type_name = field.type.fully_unwrapped.name
+            return_type = schema_def_state.object_types_by_name[return_type_name]
+            next unless return_type.is_a?(ObjectType) && return_type.namespace?
+
+            field.resolve_with :constant_value, value: {}
           end
         end
       end
