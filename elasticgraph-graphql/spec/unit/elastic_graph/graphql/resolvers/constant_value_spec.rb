@@ -11,25 +11,51 @@ require "elastic_graph/graphql/resolvers/constant_value"
 module ElasticGraph
   class GraphQL
     module Resolvers
-      RSpec.describe ConstantValue do
-        it "returns the configured `:value` regardless of the field, object, args, or context" do
-          resolver = ConstantValue.new(elasticgraph_graphql: nil, config: {value: {}})
+      RSpec.describe ConstantValue, :resolver do
+        attr_accessor :schema_artifacts
 
-          result = resolver.resolve(field: :unused, object: :unused, args: :unused, context: :unused)
+        before(:context) do
+          self.schema_artifacts = generate_schema_artifacts do |schema|
+            schema.namespace_type "Namespace" do |t|
+              t.field "name", "String" do |f|
+                f.resolve_with :constant_value, value: "ns"
+              end
+            end
 
-          expect(result).to eq({})
+            schema.on_root_query_type do |t|
+              t.field "pi", "Float" do |f|
+                f.resolve_with :constant_value, value: 3.141592654
+              end
+
+              t.field "namespace", "Namespace!" do |f|
+                f.resolve_with :constant_value, value: {}
+              end
+            end
+          end
         end
 
-        it "returns whatever object is passed as `:value`" do
-          sentinel = ::Object.new
-          resolver = ConstantValue.new(elasticgraph_graphql: nil, config: {value: sentinel})
+        let(:graphql) { build_graphql(schema_artifacts: schema_artifacts) }
 
-          expect(resolver.resolve(field: :f, object: :o, args: :a, context: :c)).to be(sentinel)
+        context "when configured with a scalar value" do
+          subject(:resolver) { ConstantValue.new(elasticgraph_graphql: graphql, config: {value: 3.141592654}) }
+
+          it "returns the configured value, ignoring the field, args, and context" do
+            expect(resolve("Query", "pi")).to eq 3.141592654
+          end
+        end
+
+        context "when configured with an object reference" do
+          let(:sentinel) { ::Object.new }
+          subject(:resolver) { ConstantValue.new(elasticgraph_graphql: graphql, config: {value: sentinel}) }
+
+          it "returns the same object reference" do
+            expect(resolve("Query", "namespace")).to be sentinel
+          end
         end
 
         it "raises when `:value` is missing from `config`" do
           expect {
-            ConstantValue.new(elasticgraph_graphql: nil, config: {})
+            ConstantValue.new(elasticgraph_graphql: graphql, config: {})
           }.to raise_error(KeyError, /value/)
         end
       end
