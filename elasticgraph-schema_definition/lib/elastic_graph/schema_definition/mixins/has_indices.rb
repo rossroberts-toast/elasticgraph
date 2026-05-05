@@ -234,14 +234,17 @@ module ElasticGraph
           ).with(**runtime_metadata_overrides)
         end
 
-        # Determines what the root `Query` fields will be to query this indexed type. In addition, this method accepts a block, which you
+        # Determines what the root query fields will be to query this indexed type. In addition, this method accepts a block, which you
         # can use to customize the root query field (such as adding a GraphQL directive to it).
         #
-        # @param plural [String] the plural name of the entity; used for the root `Query` field that queries documents of this indexed type
-        # @param singular [String, nil] the singular name of the entity; used for the root `Query` field (with an `Aggregations` suffix) that
+        # @param plural [String] the plural name of the entity; used for the root query field that queries documents of this indexed type
+        # @param singular [String, nil] the singular name of the entity; used for the root query field (with an `Aggregations` suffix) that
         #   queries aggregations of this indexed type. If not provided, will derive it from the type name (e.g. converting it to `camelCase`
         #   or `snake_case`, depending on configuration).
-        # @yield [SchemaElements::Field] field on the root `Query` type used to query this indexed type, to support customization
+        # @param on [String] name of the object type on which the root fields should be defined. Defaults to `"Query"`. To route the
+        #   fields to a {API#namespace_type namespace type} instead, pass its name (e.g. `"OlapQuery"`). The target type must have been
+        #   declared via `namespace_type`; otherwise an error is raised at schema-definition time.
+        # @yield [SchemaElements::Field] field on the target type used to query this indexed type, to support customization
         # @return [void]
         #
         # @example Set `plural` and `singular` names
@@ -269,9 +272,28 @@ module ElasticGraph
         #       t.index "people"
         #     end
         #   end
-        def root_query_fields(plural:, singular: nil, &customization_block)
+        #
+        # @example Route root fields to a namespace type
+        #   ElasticGraph.define_schema do |schema|
+        #     schema.namespace_type "OlapQuery"
+        #
+        #     schema.on_root_query_type do |t|
+        #       t.field "olap", "OlapQuery" do |f|
+        #         f.resolve_with :constant_value, value: {}
+        #       end
+        #     end
+        #
+        #     schema.object_type "Widget" do |t|
+        #       # Results in `OlapQuery.widgets` and `OlapQuery.widgetAggregations`.
+        #       t.root_query_fields plural: "widgets", on: "OlapQuery"
+        #       t.field "id", "ID"
+        #       t.index "widgets"
+        #     end
+        #   end
+        def root_query_fields(plural:, singular: nil, on: "Query", &customization_block)
           @plural_root_query_field_name = plural
           @singular_root_query_field_name = singular
+          @root_query_fields_target_namespace = on
           @root_query_fields_customizations = customization_block
         end
 
@@ -290,6 +312,12 @@ module ElasticGraph
         # @private
         def root_query_fields_customizations
           @root_query_fields_customizations
+        end
+
+        # @return [String] name of the object type on which the root fields for this indexed type should be defined.
+        #   Defaults to `"Query"`; can be overridden via the `on:` parameter of {#root_query_fields}.
+        def root_query_fields_target_namespace
+          @root_query_fields_target_namespace || "Query"
         end
 
         # @private

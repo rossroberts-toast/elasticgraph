@@ -1469,13 +1469,12 @@ module ElasticGraph
         end
 
         def populate_root_query_fields
-          query_type = schema_def_state.object_types_by_name.fetch("Query")
-
           schema_def_state.object_types_by_name.values.select(&:directly_queryable?).sort_by(&:name).each do |type|
             # @type var root_doc_type: Mixins::HasIndices & _Type
             root_doc_type = _ = type
+            target_type = resolve_root_query_fields_target(root_doc_type)
 
-            query_type.relates_to_many(
+            target_type.relates_to_many(
               root_doc_type.plural_root_query_field_name,
               root_doc_type.name,
               via: "ignore",
@@ -1493,10 +1492,29 @@ module ElasticGraph
             # the field documentation, and here we add another one.
             if (agg_efficiency_hint = aggregation_efficiency_hints_for(root_doc_type.derived_indexed_types))
               agg_name = schema_def_state.schema_elements.normalize_case("#{root_doc_type.singular_root_query_field_name}_aggregations")
-              agg_field = query_type.graphql_fields_by_name.fetch(agg_name)
+              agg_field = target_type.graphql_fields_by_name.fetch(agg_name)
               agg_field.documentation "#{agg_field.doc_comment}\n\n#{agg_efficiency_hint}"
             end
           end
+        end
+
+        def resolve_root_query_fields_target(root_doc_type)
+          target_name = root_doc_type.root_query_fields_target_namespace
+          target_type = schema_def_state.object_types_by_name[target_name]
+
+          if target_type.nil?
+            raise Errors::SchemaError,
+              "`#{root_doc_type.name}` uses `root_query_fields on: #{target_name.inspect}`, but no type named `#{target_name}` is defined. " \
+              "Declare it with `schema.namespace_type #{target_name.inspect}` or correct the `on:` value."
+          end
+
+          unless target_type.is_a?(SchemaElements::ObjectType) && target_type.namespace?
+            raise Errors::SchemaError,
+              "`#{root_doc_type.name}` uses `root_query_fields on: #{target_name.inspect}`, but `#{target_name}` is not a namespace type. " \
+              "`on:` must reference a type declared with `schema.namespace_type`."
+          end
+
+          target_type
         end
 
         def aggregation_efficiency_hints_for(derived_indexed_types)
