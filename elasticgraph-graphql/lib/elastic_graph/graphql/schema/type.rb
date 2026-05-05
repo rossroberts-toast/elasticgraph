@@ -77,8 +77,14 @@ module ElasticGraph
               # is NOT a union of `PersonAggregation` and `CompanyAggregation`, so we can't do the same thing on the
               # indexed aggregation types. Delegating to the source type solves this case.
               st.search_index_definitions
+            elsif abstract?
+              # For abstract types, derive search indexes purely from concrete subtypes. This correctly
+              # handles cases where subtypes override the abstract type's declared index with a dedicated
+              # one — only indexes that actually contain documents for this type are searched.
+              # Note: subtypes returns all concrete subtypes at any depth, so no explicit recursion is needed.
+              subtypes.flat_map(&:search_index_definitions).to_set
             else
-              @index_definitions.union(subtypes.flat_map(&:search_index_definitions))
+              @index_definitions
             end
         end
 
@@ -135,19 +141,17 @@ module ElasticGraph
           @source_type = @object_runtime_metadata&.source_type&.then { |st| @schema.type_named(st) }
         end
 
-        # Returns the set of concrete (non-abstract) indexed document types that share any of this
-        # type's search indexes but are not subtypes of this type. Used to determine whether a
-        # `__typename` filter is needed when querying an abstract type.
-        #
-        # Abstract types are excluded because documents in the datastore are always associated
-        # with a concrete `__typename`. When filtering by `__typename`, only concrete types are
-        # relevant.
-        def concrete_non_subtypes_in_shared_index
-          @concrete_non_subtypes_in_shared_index ||=
-            search_index_definitions
-              .flat_map { |index_def| @schema.document_types_stored_in(index_def.name).to_a }
-              .reject { |t| t == self || subtypes.include?(t) || t.abstract? }
-              .to_set
+        # Returns true if any of this type's search indexes contain any concrete document types
+        # that are not subtypes of this type. Used to determine whether a `__typename` filter is
+        # needed when querying an abstract type.
+        def shares_index_with_non_subtypes?
+          return @shares_index_with_non_subtypes if defined?(@shares_index_with_non_subtypes)
+          @shares_index_with_non_subtypes =
+            search_index_definitions.any? do |index_def|
+              @schema.document_types_stored_in(index_def.name).any? do |t|
+                t != self && !subtypes.include?(t) && !t.abstract?
+              end
+            end
         end
 
         def field_named(field_name)
