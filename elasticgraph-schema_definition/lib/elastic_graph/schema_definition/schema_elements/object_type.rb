@@ -55,9 +55,6 @@ module ElasticGraph
 
         # @private
         def __mark_as_namespace_type!
-          if has_own_index_def?
-            raise Errors::SchemaError, "`#{name}` cannot be both an indexed type and a namespace type."
-          end
           @namespace = true
           schema_def_state.after_user_definition_complete { auto_wire_namespace_subfields }
         end

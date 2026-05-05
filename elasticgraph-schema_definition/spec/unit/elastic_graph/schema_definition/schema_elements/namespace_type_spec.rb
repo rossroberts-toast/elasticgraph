@@ -68,8 +68,10 @@ module ElasticGraph
 
           olap = results.state.object_types_by_name.fetch("OlapQuery")
           domain_field = olap.graphql_fields_by_name.fetch("domain")
-          expect(domain_field.resolver&.name).to eq :constant_value
-          expect(domain_field.resolver&.config).to eq({value: {}})
+          resolver = domain_field.resolver
+          expect(resolver).not_to be_nil
+          expect(resolver.name).to eq :constant_value
+          expect(resolver.config).to eq({value: {}})
         end
 
         it "does not auto-wire a field on a namespace type whose return type is a regular object type" do
@@ -98,7 +100,9 @@ module ElasticGraph
 
           olap = results.state.object_types_by_name.fetch("OlapQuery")
           domain_field = olap.graphql_fields_by_name.fetch("domain")
-          expect(domain_field.resolver&.name).to eq :get_record_field_value
+          resolver = domain_field.resolver
+          expect(resolver).not_to be_nil
+          expect(resolver.name).to eq :get_record_field_value
         end
 
         it "does not auto-wire a field that takes arguments" do
