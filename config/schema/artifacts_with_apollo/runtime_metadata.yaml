@@ -1861,8 +1861,8 @@ graphql_resolvers_by_name:
   list_records:
     needs_lookahead: true
     resolver_ref:
-      name: ElasticGraph::GraphQL::Resolvers::ListRecords
-      require_path: elastic_graph/graphql/resolvers/list_records
+      name: ElasticGraph::GraphQL::Resolvers::IndexedTypeRootFieldsResolver
+      require_path: elastic_graph/graphql/resolvers/indexed_type_root_fields_resolver
   nested_relationships:
     needs_lookahead: true
     resolver_ref:

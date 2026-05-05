@@ -1428,9 +1428,9 @@ module ElasticGraph
             defined_at: require_path,
             built_in: true
 
-          require(require_path = "elastic_graph/graphql/resolvers/list_records")
+          require(require_path = "elastic_graph/graphql/resolvers/indexed_type_root_fields_resolver")
           schema_def_api.register_graphql_resolver :list_records,
-            GraphQL::Resolvers::ListRecords,
+            GraphQL::Resolvers::IndexedTypeRootFieldsResolver,
             defined_at: require_path,
             built_in: true
 
