@@ -278,7 +278,9 @@ module ElasticGraph
         #     schema.namespace_type "OlapQuery"
         #
         #     schema.on_root_query_type do |t|
-        #       t.field "olap", "OlapQuery"
+        #       t.field "olap", "OlapQuery" do |f|
+        #         f.resolve_with :constant_value, value: {}
+        #       end
         #     end
         #
         #     schema.object_type "Widget" do |t|
