@@ -149,27 +149,23 @@ module ElasticGraph
       #   to the built-in `:constant_value` resolver (with an empty hash as the value), so you
       #   don't have to assign a resolver for intermediate namespace fields.
       #
-      # Use the `on:` parameter of {Mixins::HasIndices#root_query_fields} to route an indexed type's
-      # root query fields to a namespace type.
-      #
       # @param name [String] name of the namespace type
       # @yield [SchemaElements::ObjectType] namespace type object, for further customization
       # @return [void]
       #
-      # @example Define an `OlapQuery` namespace and route `Widget` to it
+      # @example Define an `OlapQuery` namespace type
       #   ElasticGraph.define_schema do |schema|
       #     schema.namespace_type "OlapQuery" do |t|
       #       t.documentation "Namespace for OLAP query fields."
+      #       t.field "name", "String" do |f|
+      #         f.resolve_with :constant_value, value: "olap"
+      #       end
       #     end
       #
       #     schema.on_root_query_type do |t|
-      #       t.field "olap", "OlapQuery"
-      #     end
-      #
-      #     schema.object_type "Widget" do |t|
-      #       t.root_query_fields plural: "widgets", singular: "widget", on: "OlapQuery"
-      #       t.field "id", "ID"
-      #       t.index "widgets"
+      #       t.field "olap", "OlapQuery!" do |f|
+      #         f.resolve_with :constant_value, value: {}
+      #       end
       #     end
       #   end
       def namespace_type(name, &block)
