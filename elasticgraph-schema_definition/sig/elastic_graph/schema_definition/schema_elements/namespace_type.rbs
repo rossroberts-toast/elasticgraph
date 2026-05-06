@@ -1,0 +1,16 @@
+module ElasticGraph
+  module SchemaDefinition
+    module SchemaElements
+      class NamespaceType < ObjectType
+        def initialize: (State, ::String) ?{ (NamespaceType) -> void } -> void
+
+        def namespace?: () -> bool
+        def index: (::String, **untyped) ?{ (Indexing::Index) -> void } -> void
+
+        private
+
+        def auto_wire_namespace_subfields: () -> void
+      end
+    end
+  end
+end

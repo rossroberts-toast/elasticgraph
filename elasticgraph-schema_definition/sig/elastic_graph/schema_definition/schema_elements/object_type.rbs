@@ -14,15 +14,9 @@ module ElasticGraph
         include Mixins::SupportsFilteringAndAggregation
         include _IndexableType
 
-        @namespace: bool?
         def namespace?: () -> bool
-        def __mark_as_namespace_type!: () -> void
 
         def initialize: (State, ::String) ?{ (ObjectType) -> void } -> void
-
-        private
-
-        def auto_wire_namespace_subfields: () -> void
       end
     end
   end

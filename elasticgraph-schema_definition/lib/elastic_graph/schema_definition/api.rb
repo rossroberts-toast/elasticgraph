@@ -142,15 +142,15 @@ module ElasticGraph
       # particularly useful when composing ElasticGraph into a federated supergraph, where grouping
       # related fields under a namespace keeps them discoverable among fields from other subgraphs.
       #
-      # A namespace type is an ordinary GraphQL object type with two differences:
+      # A namespace type is a GraphQL object type with two differences from a regular object type:
       #
-      # - It must not be indexed (calling `index` on it raises an error).
+      # - It cannot be indexed (calling `index` on it raises an error).
       # - Fields on a namespace type whose return type is another namespace type are auto-wired
       #   to the built-in `:constant_value` resolver (with an empty hash as the value), so you
       #   don't have to assign a resolver for intermediate namespace fields.
       #
       # @param name [String] name of the namespace type
-      # @yield [SchemaElements::ObjectType] namespace type object, for further customization
+      # @yield [SchemaElements::NamespaceType] namespace type object, for further customization
       # @return [void]
       #
       # @example Define an `OlapQuery` namespace type
@@ -169,12 +169,7 @@ module ElasticGraph
       #     end
       #   end
       def namespace_type(name, &block)
-        type = @factory.new_object_type(name.to_s) do |t|
-          t.__mark_as_namespace_type!
-          t.resolve_fields_with nil
-          block&.call(t)
-        end
-        @state.register_object_interface_or_union_type type
+        @state.register_object_interface_or_union_type @factory.new_namespace_type(name.to_s, &block)
         nil
       end
 

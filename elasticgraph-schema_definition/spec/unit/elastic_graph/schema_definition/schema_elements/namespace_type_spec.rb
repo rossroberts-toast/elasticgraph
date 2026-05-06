@@ -14,12 +14,13 @@ module ElasticGraph
     RSpec.describe "#namespace_type" do
       include_context "SchemaDefinitionHelpers"
 
-      it "registers the type as an object type flagged as a namespace" do
+      it "registers the type as a NamespaceType (which is an ObjectType)" do
         results = define_schema(schema_element_name_form: "snake_case") do |schema|
           schema.namespace_type "OlapQuery"
         end
 
         type = results.state.object_types_by_name.fetch("OlapQuery")
+        expect(type).to be_a(SchemaElements::NamespaceType)
         expect(type).to be_a(SchemaElements::ObjectType)
         expect(type.namespace?).to be true
         expect(type.directly_queryable?).to be false
@@ -32,7 +33,9 @@ module ElasticGraph
           end
         end
 
-        expect(results.state.object_types_by_name.fetch("Plain").namespace?).to be false
+        plain = results.state.object_types_by_name.fetch("Plain")
+        expect(plain).not_to be_a(SchemaElements::NamespaceType)
+        expect(plain.namespace?).to be false
       end
 
       it "yields the type to a block for further customization (documentation, directives, fields)" do

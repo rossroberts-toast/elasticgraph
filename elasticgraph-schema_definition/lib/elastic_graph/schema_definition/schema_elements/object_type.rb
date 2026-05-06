@@ -49,14 +49,9 @@ module ElasticGraph
         end
 
         # @return [Boolean] true if this type was declared via {API#namespace_type} and groups root query fields.
+        #   Overridden by {NamespaceType}; always `false` on a regular object type.
         def namespace?
-          @namespace == true
-        end
-
-        # @private
-        def __mark_as_namespace_type!
-          @namespace = true
-          schema_def_state.after_user_definition_complete { auto_wire_namespace_subfields }
+          false
         end
 
         # @private
@@ -66,24 +61,6 @@ module ElasticGraph
             __skip__ = super(type) do
               yield self
             end
-          end
-        end
-
-        private
-
-        # Auto-assigns `:constant_value` to fields on this namespace type whose return type is itself a namespace
-        # type, as long as the field has no arguments and no explicitly assigned resolver. This spares the schema
-        # author from wiring a trivial resolver on every intermediate namespace field.
-        def auto_wire_namespace_subfields
-          graphql_fields_by_name.each_value do |field|
-            next unless field.args.empty?
-            next unless field.resolver.nil?
-
-            return_type_name = field.type.fully_unwrapped.name
-            return_type = schema_def_state.object_types_by_name[return_type_name]
-            next unless return_type.is_a?(ObjectType) && return_type.namespace?
-
-            field.resolve_with :constant_value, value: {}
           end
         end
       end
