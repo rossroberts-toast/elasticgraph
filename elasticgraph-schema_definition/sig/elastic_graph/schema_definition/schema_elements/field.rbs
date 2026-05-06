@@ -28,6 +28,7 @@ module ElasticGraph
         attr_reader resolver: SchemaArtifacts::RuntimeMetadata::ConfiguredGraphQLResolver?
         attr_reader singular_name: ::String?
         attr_reader as_input: bool
+        attr_reader args: ::Hash[::String, Argument]
 
         def initialize: (
           name: ::String,

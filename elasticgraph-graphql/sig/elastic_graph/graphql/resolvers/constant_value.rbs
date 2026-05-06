@@ -1,0 +1,11 @@
+module ElasticGraph
+  class GraphQL
+    module Resolvers
+      class ConstantValue
+        include _GraphQLResolverWithoutLookahead
+
+        @value: untyped
+      end
+    end
+  end
+end
