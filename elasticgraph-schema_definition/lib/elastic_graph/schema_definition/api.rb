@@ -145,9 +145,9 @@ module ElasticGraph
       # A namespace type is a GraphQL object type with two differences from a regular object type:
       #
       # - It cannot be indexed (calling `index` on it raises an error).
-      # - Fields on a namespace type whose return type is another namespace type are auto-wired
-      #   to the built-in `:constant_value` resolver (with an empty hash as the value), so you
-      #   don't have to assign a resolver for intermediate namespace fields.
+      # - Any no-argument field (on any parent type, including `Query`) whose return type is a
+      #   namespace type is auto-wired to the built-in `:constant_value` resolver (with an empty
+      #   hash as the value), so you don't have to assign a resolver for intermediate namespace fields.
       #
       # @param name [String] name of the namespace type
       # @yield [SchemaElements::NamespaceType] namespace type object, for further customization
@@ -163,9 +163,8 @@ module ElasticGraph
       #     end
       #
       #     schema.on_root_query_type do |t|
-      #       t.field "olap", "OlapQuery!" do |f|
-      #         f.resolve_with :constant_value, value: {}
-      #       end
+      #       # `olap` has no args and returns a namespace type, so it's auto-wired to `:constant_value`.
+      #       t.field "olap", "OlapQuery!"
       #     end
       #   end
       def namespace_type(name, &block)

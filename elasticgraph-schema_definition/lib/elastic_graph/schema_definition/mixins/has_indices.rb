@@ -8,6 +8,7 @@
 
 require "elastic_graph/constants"
 require "elastic_graph/errors"
+require "elastic_graph/schema_artifacts/runtime_metadata/configured_graphql_resolver"
 require "elastic_graph/schema_definition/indexing/update_target_factory"
 
 module ElasticGraph
@@ -365,7 +366,9 @@ module ElasticGraph
             field_metadata = field.runtime_metadata_graphql_field
 
             if field_metadata.resolver.nil?
-              if default_graphql_resolver
+              if (namespace_resolver = implicit_namespace_resolver_for(field))
+                field_metadata.with(resolver: namespace_resolver)
+              elsif default_graphql_resolver
                 field_metadata.with(resolver: default_graphql_resolver)
               else
                 parent_type_option =
@@ -383,6 +386,18 @@ module ElasticGraph
               field_metadata
             end
           end
+        end
+
+        # If `field`'s return type is a namespace type, returns an auto-wired `:constant_value` resolver so
+        # the schema author doesn't have to spell it out. Intermediate namespace wrappers (e.g. `Query.olap`
+        # returning `OlapQuery!`) are pure groupings with no backing data, so the empty-hash constant serves
+        # as the "passthrough" object the child resolvers hang off of. Fields that declare arguments are
+        # excluded since arguments signal the author wants custom resolution.
+        def implicit_namespace_resolver_for(field)
+          return nil unless field.args.empty?
+          return_type = schema_def_state.object_types_by_name[field.type.fully_unwrapped.name]
+          return nil unless return_type&.namespace?
+          SchemaArtifacts::RuntimeMetadata::ConfiguredGraphQLResolver.new(:constant_value, {value: {}})
         end
 
         # Provides a "best effort" conversion of a type name to the plural form.

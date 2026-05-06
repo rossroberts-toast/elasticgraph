@@ -15,8 +15,8 @@ module ElasticGraph
       # {include:API#namespace_type}
       #
       # A namespace type is an {ObjectType} that exists purely to group fields on `Query` (or on
-      # another namespace type) under a shared path. It cannot be indexed, and fields on a namespace
-      # type whose return type is another namespace type are auto-wired to the built-in
+      # another namespace type) under a shared path. It cannot be indexed, and any no-argument field
+      # (on any parent type) whose return type is a namespace type is auto-wired to the built-in
       # `:constant_value` resolver.
       #
       # @example Define a namespace type
@@ -29,10 +29,12 @@ module ElasticGraph
         # @private
         def initialize(schema_def_state, name)
           super(schema_def_state, name) do |type|
+            # Namespace types have no backing data, so no default resolver applies. Each field either
+            # sets its own or is auto-wired to `:constant_value` when its return type is another
+            # namespace (handled at runtime metadata time by `HasIndices#runtime_metadata_graphql_fields_by_name`).
             type.resolve_fields_with nil
             yield type if block_given?
           end
-          schema_def_state.after_user_definition_complete { auto_wire_namespace_subfields }
         end
 
         # @return [Boolean] always `true` for a namespace type.
@@ -45,24 +47,6 @@ module ElasticGraph
         # @private
         def index(name, **settings, &block)
           raise Errors::SchemaError, "`#{self.name}` cannot be both an indexed type and a namespace type."
-        end
-
-        private
-
-        # Auto-assigns `:constant_value` to fields on this namespace type whose return type is itself a namespace
-        # type, as long as the field has no arguments and no explicitly assigned resolver. This spares the schema
-        # author from wiring a trivial resolver on every intermediate namespace field.
-        def auto_wire_namespace_subfields
-          graphql_fields_by_name.each_value do |field|
-            next unless field.args.empty?
-            next unless field.resolver.nil?
-
-            return_type_name = field.type.fully_unwrapped.name
-            return_type = schema_def_state.object_types_by_name[return_type_name]
-            next unless return_type.is_a?(NamespaceType)
-
-            field.resolve_with :constant_value, value: {}
-          end
         end
       end
     end
